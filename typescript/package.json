@@ -1,0 +1,29 @@
+{
+  "name": "Overseer",
+  "version": "0.0.1",
+  "scripts": {
+    "prebuild": "set EMCC_DEBUG=0 && C:/Users/Tim/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/213.5744.254/bin/cmake/win/bin/cmake.exe --build C:/Users/Tim/Projects/Screeps/Overseer/wasm/cmake-build-release --target module",
+    "build": "rollup -c --config-",
+    "debug-llvm": "C:/Users/Tim/Source/emsdk/upstream/emscripten/em++.py -std=gnu++17 -S -O3 -emit-llvm ../wasm/src/common/Pathfinder.cpp -o ../wasm/debug/llvm-debug.ll -c -msimd128 -msse4.1 --no-entry -IC:../wasm/lib/linalg -IC:../wasm/lib/entt/src/entt -IC:../wasm/src",
+    "lint": "gts lint",
+    "clean": "gts clean",
+    "compile": "tsc",
+    "fix": "gts fix",
+    "prepare": "npm.cmd run compile",
+    "pretest": "npm.cmd run compile",
+    "posttest": "npm.cmd run lint"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^21.0.1",
+    "@rollup/plugin-node-resolve": "^13.1.1",
+    "@types/emscripten": "^1.39.5",
+    "@types/node": "^14.11.2",
+    "gts": "^3.1.0",
+    "prettier": "2.5.1",
+    "rollup": "^2.6.1",
+    "rollup-plugin-base64": "^1.0.1",
+    "rollup-plugin-empty-dir": "^1.0.5",
+    "rollup-plugin-typescript2": "^0.27.0",
+    "typescript": "^4.4.3"
+  }
+}

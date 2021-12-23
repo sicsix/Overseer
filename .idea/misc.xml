@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$/wasm">
+    <contentRoot DIR="$PROJECT_DIR$" />
+  </component>
+  <component name="CidrRootsConfiguration">
+    <sourceRoots>
+      <file path="$PROJECT_DIR$/typescript" />
+    </sourceRoots>
+    <libraryRoots>
+      <file path="$PROJECT_DIR$/typescript/@types" />
+      <file path="$PROJECT_DIR$/wasm/lib/EAAssert" />
+      <file path="$PROJECT_DIR$/wasm/lib/EABase" />
+      <file path="$PROJECT_DIR$/wasm/lib/EAMain" />
+      <file path="$PROJECT_DIR$/wasm/lib/EASTL" />
+      <file path="$PROJECT_DIR$/wasm/lib/EAStdC" />
+      <file path="$PROJECT_DIR$/wasm/lib/EATest" />
+      <file path="$PROJECT_DIR$/wasm/lib/EAThread" />
+      <file path="$PROJECT_DIR$/wasm/lib/entt" />
+      <file path="$PROJECT_DIR$/wasm/lib/linalg" />
+    </libraryRoots>
+    <excludeRoots>
+      <file path="$PROJECT_DIR$/dist" />
+      <file path="$PROJECT_DIR$/typescript/tools" />
+      <file path="$PROJECT_DIR$/wasm/build" />
+      <file path="$PROJECT_DIR$/wasm/debug" />
+    </excludeRoots>
+  </component>
+</project>

@@ -1,0 +1,7 @@
+
+[submodule "wasm/lib/linalg"]
+	path = wasm/lib/linalg
+	url = https://github.com/sgorsten/linalg
+[submodule "wasm/lib/entt"]
+	path = wasm/lib/entt
+	url = https://github.com/skypjack/entt/

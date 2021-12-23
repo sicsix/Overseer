@@ -1,0 +1,57 @@
+{
+  "_from": "@types/screeps-arena@^0.0.1",
+  "_id": "@types/screeps-arena@0.0.1",
+  "_inBundle": false,
+  "_integrity": "sha512-add9EMxpCA2WwyXLpIoqdNFNZgt1Nx3kG6PZd3l03/Y9wzFQ1Rtwb/+66+bnRPeeNunOYet2PU5iHme7n+9ywA==",
+  "_location": "/@types/screeps-arena",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "@types/screeps-arena@^0.0.1",
+    "name": "@types/screeps-arena",
+    "escapedName": "@types%2fscreeps-arena",
+    "scope": "@types",
+    "rawSpec": "^0.0.1",
+    "saveSpec": null,
+    "fetchSpec": "^0.0.1"
+  },
+  "_requiredBy": [
+    "#DEV:/"
+  ],
+  "_resolved": "https://registry.npmjs.org/@types/screeps-arena/-/screeps-arena-0.0.1.tgz",
+  "_shasum": "1054e3cba31e2ba58809f692d88af4861b5b2db4",
+  "_spec": "@types/screeps-arena@^0.0.1",
+  "_where": "C:\\Users\\Tim\\Projects\\emcc-typescript-example",
+  "bugs": {
+    "url": "https://github.com/DefinitelyTyped/DefinitelyTyped/issues"
+  },
+  "bundleDependencies": false,
+  "contributors": [
+    {
+      "name": "thmsn",
+      "url": "https://github.com/thmsndk"
+    },
+    {
+      "name": "Skyler Kehren",
+      "url": "https://github.com/pyrodogg"
+    }
+  ],
+  "dependencies": {},
+  "deprecated": false,
+  "description": "TypeScript definitions for screeps-arena",
+  "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/screeps-arena",
+  "license": "MIT",
+  "main": "",
+  "name": "@types/screeps-arena",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+    "directory": "types/screeps-arena"
+  },
+  "scripts": {},
+  "typeScriptVersion": "3.8",
+  "types": "index.d.ts",
+  "typesPublisherContentHash": "23b9a34aceee5950cf0b203a2a2ce5bb014c143e48b44596fdc133605ed92b3a",
+  "version": "0.0.1"
+}
