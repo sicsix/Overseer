@@ -30,13 +30,19 @@ namespace Overseer
         Imports::ImportHandler::Process(Registry, ImportBuffer, objectCount);
         Commands::CommandHandler::Begin();
 
+        printf("[WASM] Running MapSystem...\n");
         mapSystem.Update(Registry);
+
+        printf("[WASM] Running InfluenceSystem...\n");
         influenceSystem.Update(Registry);
+
+        printf("[WASM] Running MovementSystem...\n");
         movementSystem.Update(Registry);
 
         auto start = int2(10, 10);
         auto goal  = int2(90, 90);
 
+        printf("[WASM] Pathfinding debug\n");
         auto pathFinder = Registry.ctx<Common::Pathfinder>();
         auto path       = Components::Path();
 
@@ -83,6 +89,7 @@ namespace Overseer
         //			}
         //		}
 
+        printf("PRE END");
         return Commands::CommandHandler::End();
     }
 } // namespace Overseer

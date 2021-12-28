@@ -55,26 +55,11 @@ namespace Overseer::Common
         if (startIndex < 0 || startIndex >= MAP_SIZE || goalIndex < 0 || goalIndex >= MAP_SIZE)
             return false;
 
-        // auto originTile      = navMap.Map[startIndex];
-        // auto destinationTile = navMap.Map[goalIndex];
-
-        //			if (originTile.BucketID !=
-        // destinationTile.BucketID) 				return
-        // PathfindingStatus.NoValidPath;
-
         // TODO Check start and finish tiles are passable! (not 255)
 
         // Special case when the start is the same point as the goal
         if (startIndex == goalIndex)
             return true;
-
-        // We need to sort the multimap by one of the int2 values, first value should be Expected cost, second value
-        // should be CostSoFar
-
-        // C# system uses the Expected cost to sort the minHeap, therefore the next pop will always be the node that
-        // is closest to the target It stores a CostSoFar on the map itself, which is the current best Cost of the
-        // path to that tile It also stores CostSoFar in the minheap when adding a new node, which allows for
-        // testing to the current best path, and exiting early if it is not
 
         nodeSet[startIndex] = FinderNode(-1, 0);
         openSet.Push(DistanceChebyshev(start, goal), Node(startIndex, 0));
@@ -98,13 +83,11 @@ namespace Overseer::Common
 
             auto pos = IndexToPos(current.Index, MAP_WIDTH); // Maybe store this in openSet?
 
-            // printf("Index: %i   CostSoFar: %i    NodeCost: %i    NodeCameFrom: %i   TileCost: %i    Pos: { %i, %i
-            // }\n",
+            // printf("Index: %i   CostSoFar: %i    NodeCost: %i    NodeCameFrom: %i    Pos: { %i, %i}\n",
             //        current.Index,
             //        current.CostSoFar,
             //        visitedNode.Cost,
             //        visitedNode.CameFrom,
-            //        tileCost,
             //        pos.x,
             //        pos.y);
 
@@ -117,10 +100,9 @@ namespace Overseer::Common
         if (!foundPath)
             return false;
 
-        int  currentIndex = goalIndex;
-        int2 currentPos   = goal;
-        int  reversePathArray[128]; // TODO pass this in and reuse it
-        int  pathIndex = 0;
+        int currentIndex = goalIndex;
+        int reversePathArray[128]; // TODO pass this in and reuse it
+        int pathIndex = 0;
 
         do
         {
@@ -159,8 +141,10 @@ namespace Overseer::Common
         currentIndexes          = clamp(currentIndexes, 0, MAP_SIZE - 1);
 
         // printf(
-        //     "CurrentPostions: {{ %i, %i }, { %i, %i }, { %i, %i } { %i, %i }   IsPosInbounds: { %i, %i, %i, %i }
-        //     CurrentIndexes: { %i, %i, %i, %i }\n", currentPositions.x.x, currentPositions.y.x, currentPositions.x.y,
+        //     "CurrentPostions: {{ %i, %i }, { %i, %i }, { %i, %i } { %i, %i }   IsPosInbounds: { %i, %i, %i, %i }    CurrentIndexes: { %i, %i, %i, %i }\n",
+        //     currentPositions.x.x,
+        //     currentPositions.y.x,
+        //     currentPositions.x.y,
         //     currentPositions.y.y,
         //     currentPositions.x.z,
         //     currentPositions.y.z,
@@ -175,11 +159,12 @@ namespace Overseer::Common
         //     currentIndexes.z,
         //     currentIndexes.w);
 
-        int4 costSoFar = int4(navMap.Map[currentIndexes.x],
+        int4 tileCosts = int4(navMap.Map[currentIndexes.x],
                               navMap.Map[currentIndexes.y],
                               navMap.Map[currentIndexes.z],
-                              navMap.Map[currentIndexes.w]) +
-                         parentCost;
+                              navMap.Map[currentIndexes.w]);
+
+        int4 costSoFar = tileCosts + parentCost;
 
         int4 prevCostSoFar = int4(nodeSet[currentIndexes.x].Cost,
                                   nodeSet[currentIndexes.y].Cost,
@@ -198,14 +183,13 @@ namespace Overseer::Common
 
         bool4 isBetterRoute = less(costSoFar, prevCostSoFar);
         // printf(
-        //     "IsBetterRoute { %i, %i, %i, %i }\n", isBetterRoute.x, isBetterRoute.y, isBetterRoute.z,
-        //     isBetterRoute.w);
+        //     "IsBetterRoute { %i, %i, %i, %i }\n", isBetterRoute.x, isBetterRoute.y, isBetterRoute.z, isBetterRoute.w);
 
         int4 heuristics = DistanceChebyshevSIMD(currentPositions, goal);
         // printf("Heuristics { %i, %i, %i, %i }\n", heuristics.x, heuristics.y, heuristics.z, heuristics.w);
 
         int4  expectedCosts = costSoFar + heuristics;
-        bool4 isTileValid   = (bool4)(!gequal(costSoFar, INT_MAXVALUE) & isPosInbounds & isBetterRoute);
+        bool4 isTileValid   = (bool4)(!equal(tileCosts, INT_MAXVALUE) & isPosInbounds & isBetterRoute);
         currentIndexes      = select(isTileValid, currentIndexes, MAP_SIZE); // MAP_SIZE is outside map
 
         nodeSet[currentIndexes.x] = FinderNode(index, costSoFar.x);
@@ -215,8 +199,7 @@ namespace Overseer::Common
 
         // printf("IsTileValid { %i, %i, %i, %i }\n", isTileValid.x, isTileValid.y, isTileValid.z, isTileValid.w);
         // printf(
-        //     "ExpectedCosts { %i, %i, %i, %i }\n", expectedCosts.x, expectedCosts.y, expectedCosts.z,
-        //     expectedCosts.w);
+        //     "ExpectedCosts { %i, %i, %i, %i }\n", expectedCosts.x, expectedCosts.y, expectedCosts.z, expectedCosts.w);
 
         if (isTileValid.x)
             openSet.Push(expectedCosts.x, Node(currentIndexes.x, costSoFar.x));

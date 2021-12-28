@@ -29,12 +29,31 @@ namespace Overseer::Common
     {
         memset(costs, INT_MAXVALUE, sizeof(int) * (INFLUENCE_SIZE + 1));
 
+        printf(
+            "WorldStart: { %i, %i }    WorldEnd: { %i, %i }    WorldCenter: { %i, %i }    MapStartIndex: %i    MapYIncrement: %i    InfStart: { %i, %i }    InfEnd: { %i, %i }    InfStartIndex: %i    InfYIncrement: %i\n",
+            threatIMAP.WorldStart.x,
+            threatIMAP.WorldStart.y,
+            threatIMAP.WorldEnd.x,
+            threatIMAP.WorldEnd.y,
+            threatIMAP.WorldCenter.x,
+            threatIMAP.WorldCenter.y,
+            threatIMAP.MapStartIndex,
+            threatIMAP.MapYIncrement,
+            threatIMAP.InfStart.x,
+            threatIMAP.InfStart.y,
+            threatIMAP.InfEnd.x,
+            threatIMAP.InfEnd.y,
+            threatIMAP.InfStartIndex,
+            threatIMAP.InfYIncrement);
+
         int centerIndex = PosToIndex(threatIMAP.WorldCenter, MAP_WIDTH);
 
-        // Set the
-        int2 centerStart = max(threatIMAP.WorldCenter - 1, 0);
-        int2 centerEnd   = min(threatIMAP.WorldCenter + 1, MAP_WIDTH);
-        int2 infStart    = threatIMAP.InfCenter - (threatIMAP.WorldCenter - threatIMAP.WorldStart);
+        int2 centerStartUnclamped = threatIMAP.WorldCenter - 1;
+        int2 centerStart          = max(centerStartUnclamped, 0);
+        int2 centerEnd            = min(threatIMAP.WorldCenter + 2, MAP_WIDTH);
+
+        int2 offset   = centerStart - centerStartUnclamped;
+        int2 infStart = INFLUENCE_CENTER - 1 + offset;
 
         int width         = centerEnd.x - centerStart.x;
         int mapYIncrement = MAP_WIDTH - width;
@@ -42,6 +61,22 @@ namespace Overseer::Common
 
         int mapIndex = PosToIndex(centerStart, MAP_WIDTH);
         int infIndex = PosToIndex(infStart, INFLUENCE_WIDTH);
+
+        printf("Offset: { %i, %i }\n", offset.x, offset.y);
+        printf(
+            "CenterIndex: %i    CenterStart: { %i, %i }    CenterEnd: { %i, %i }    InfStart: { %i, %i }    Width: %i    MapYIncrement: %i    InfYIncrement: %i    MapIndex: %i    InfIndex: %i\n",
+            centerIndex,
+            centerStart.x,
+            centerStart.y,
+            centerEnd.x,
+            centerEnd.y,
+            infStart.x,
+            infStart.y,
+            width,
+            mapYIncrement,
+            infYIncrement,
+            mapIndex,
+            infIndex);
 
         for (int y = centerStart.y; y < centerEnd.y; ++y)
         {
@@ -110,12 +145,12 @@ namespace Overseer::Common
         int4   currentWorldIndexes   = PosToIndexSIMD(currentWorldPositions, MAP_WIDTH);
         currentWorldIndexes          = clamp(currentWorldIndexes, 0, MAP_SIZE - 1);
 
-        int4 costSoFar = int4(navMap.Map[currentWorldIndexes.x],
+        int4 tileCosts = int4(navMap.Map[currentWorldIndexes.x],
                               navMap.Map[currentWorldIndexes.y],
                               navMap.Map[currentWorldIndexes.z],
-                              navMap.Map[currentWorldIndexes.w]) *
-                             costMultiplier +
-                         parentCost;
+                              navMap.Map[currentWorldIndexes.w]);
+
+        int4 costSoFar = tileCosts * costMultiplier + parentCost;
 
         int4x2 currentInfPositions = currentWorldPositions - int4x2(int4(worldStart.x), int4(worldStart.y));
         int4   currentInfIndexes   = PosToIndexSIMD(currentInfPositions, INFLUENCE_WIDTH);
@@ -127,7 +162,7 @@ namespace Overseer::Common
 
         bool4 isBetterRoute = less(costSoFar, prevCostSoFar);
 
-        bool4 isTileValid = (bool4)(!gequal(costSoFar, INT_MAXVALUE) & isPosInbounds & isBetterRoute);
+        bool4 isTileValid = (bool4)(!equal(tileCosts, INT_MAXVALUE) & isPosInbounds & isBetterRoute);
         currentInfIndexes =
             select(isTileValid, currentInfIndexes, INFLUENCE_SIZE); // INFLUENCE_SIZE is outside influence map
 

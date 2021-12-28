@@ -179,7 +179,6 @@ namespace Overseer::Components
         int    MapYIncrement;
         int2   InfStart;
         int2   InfEnd;
-        int2   InfCenter;
         int    InfStartIndex;
         int    InfYIncrement;
         float* Influence = new float[INFLUENCE_SIZE];

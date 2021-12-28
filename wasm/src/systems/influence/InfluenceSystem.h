@@ -32,8 +32,8 @@ namespace Overseer::Systems
             auto navMap         = registry.ctx<Common::NavMap>();
             auto friendlyProx   = registry.ctx<FriendlyProxIMAP>();
             auto friendlyThreat = registry.ctx<FriendlyThreatIMAP>();
-            auto enemyProx      = registry.ctx<FriendlyProxIMAP>();
-            auto enemyThreat    = registry.ctx<FriendlyThreatIMAP>();
+            auto enemyProx      = registry.ctx<EnemyProxIMAP>();
+            auto enemyThreat    = registry.ctx<EnemyThreatIMAP>();
             auto pathcoster     = registry.ctx<Common::Pathcoster>();
 
             ClearMap(friendlyProx);
@@ -42,16 +42,15 @@ namespace Overseer::Systems
             ClearMap(enemyThreat);
 
             // TODO narrow this down eventually to only cover creeps, and all of them
-            auto view = registry.view<My, Pos, CreepProxIMAP, CreepThreatIMAP, Threat>();
-
-            // bool ranOnce = false;
-            for (auto entity : view)
+            auto friendlyCreeps = registry.view<My, Pos, CreepProxIMAP, CreepThreatIMAP, Threat>();
+            bool ranOnce        = false;
+            for (auto entity : friendlyCreeps)
             {
-                // if (ranOnce)
-                //     break;
-                // ranOnce = true;
+                if (ranOnce)
+                    break;
+                ranOnce = true;
 
-                auto [pos, proxIMAP, threatIMAP, threat] = view.get(entity);
+                auto [pos, proxIMAP, threatIMAP, threat] = friendlyCreeps.get(entity);
 
                 // SubtractInfluence(friendlyProx, proxIMAP);
                 // SubtractInfluence(friendlyThreat, threatIMAP);
@@ -59,7 +58,7 @@ namespace Overseer::Systems
                 ClampAndSetBounds(pos, proxIMAP);
                 ClampAndSetBounds(pos, threatIMAP);
 
-                // printf("Entity: %i    Pos: { %i, %i }\n", entity, pos.Val.x, pos.Val.y);
+                printf("Entity: %i    Pos: { %i, %i }\n", entity, pos.Val.x, pos.Val.y);
 
                 CalculateProximityInfluence(navMap, proxIMAP);
                 CalculateThreatInfluence(navMap, threatIMAP, pathcoster, threat);
@@ -68,7 +67,22 @@ namespace Overseer::Systems
                 AddInfluence(friendlyThreat, threatIMAP);
             }
 
-            // DebugIMAP(friendlyProx, 0.01f, 500);
+            // auto enemyCreeps = registry.view<Pos, CreepProxIMAP, CreepThreatIMAP, Threat>(entt::exclude<My>);
+            // for (auto entity : enemyCreeps)
+            // {
+            //     auto [pos, proxIMAP, threatIMAP, threat] = enemyCreeps.get(entity);
+            //
+            //     ClampAndSetBounds(pos, proxIMAP);
+            //     ClampAndSetBounds(pos, threatIMAP);
+            //
+            //     CalculateProximityInfluence(navMap, proxIMAP);
+            //     // CalculateThreatInfluence(navMap, threatIMAP, pathcoster, threat);
+            //
+            //     AddInfluence(enemyProx, proxIMAP);
+            //     AddInfluence(enemyThreat, threatIMAP);
+            // }
+
+            DebugIMAP(friendlyThreat, 0.01f, 500);
         }
 
       private:
@@ -104,7 +118,7 @@ namespace Overseer::Systems
             int mapIndex = creepIMAP.MapStartIndex;
             int infIndex = creepIMAP.InfStartIndex;
 
-            // printf("{ ");
+            // printf("AddInfluence: { ");
             for (int y = creepIMAP.InfStart.y; y < creepIMAP.InfEnd.y; ++y)
             {
                 for (int x = creepIMAP.InfStart.x; x < creepIMAP.InfEnd.x; ++x)
@@ -128,13 +142,12 @@ namespace Overseer::Systems
             creepIMAP.WorldStart    = max(worldStartUnclamped, 0);
             creepIMAP.WorldEnd      = min(worldEndUnclamped, MAP_WIDTH);
             creepIMAP.WorldCenter   = pos.Val;
-            creepIMAP.MapStartIndex = creepIMAP.WorldStart.y * MAP_WIDTH + creepIMAP.WorldStart.x;
+            creepIMAP.MapStartIndex = PosToIndex(creepIMAP.WorldStart, MAP_WIDTH);
 
-            int2 offset             = creepIMAP.WorldStart - pos.Val;
+            int2 offset             = creepIMAP.WorldStart - worldStartUnclamped;
             creepIMAP.InfStart      = max(offset, 0);
             creepIMAP.InfEnd        = INFLUENCE_WIDTH - min(offset, 0);
-            creepIMAP.InfCenter     = INFLUENCE_CENTER - offset;
-            creepIMAP.InfStartIndex = creepIMAP.InfStart.y * INFLUENCE_WIDTH + creepIMAP.InfStart.x;
+            creepIMAP.InfStartIndex = PosToIndex(creepIMAP.InfStart, INFLUENCE_WIDTH);
 
             int width               = creepIMAP.InfEnd.x - creepIMAP.InfStart.x;
             creepIMAP.MapYIncrement = MAP_WIDTH - width;
@@ -144,20 +157,34 @@ namespace Overseer::Systems
         void CalculateProximityInfluence(Common::NavMap navMap, CreepProxIMAP& proxIMAP)
         {
             // printf(
-            //     "InfStart: { %i, %i }    InfEnd: { %i, %i }    Width: %i    WidthDiff: %i    MapIndex: %i    MyIndex:
-            //     %i\n", start.x, start.y, end.x, end.y, width, widthDiff, mapIndex, myIndex);
+            //     "WorldStart: { %i, %i }    WorldEnd: { %i, %i }    WorldCenter: { %i, %i }    MapStartIndex: %i    MapYIncrement: %i    InfStart: { %i, %i }    InfEnd: { %i, %i }    InfStartIndex: %i    InfYIncrement: %i\n",
+            //     proxIMAP.WorldStart.x,
+            //     proxIMAP.WorldStart.y,
+            //     proxIMAP.WorldEnd.x,
+            //     proxIMAP.WorldEnd.y,
+            //     proxIMAP.WorldCenter.x,
+            //     proxIMAP.WorldCenter.y,
+            //     proxIMAP.MapStartIndex,
+            //     proxIMAP.MapYIncrement,
+            //     proxIMAP.InfStart.x,
+            //     proxIMAP.InfStart.y,
+            //     proxIMAP.InfEnd.x,
+            //     proxIMAP.InfEnd.y,
+            //     proxIMAP.InfStartIndex,
+            //     proxIMAP.InfYIncrement);
 
             int mapIndex = proxIMAP.MapStartIndex;
             int infIndex = proxIMAP.InfStartIndex;
 
-            // printf("{ ");
+            // printf("CalculateProximityInfluence: { ");
             for (int y = proxIMAP.InfStart.y; y < proxIMAP.InfEnd.y; ++y)
             {
                 for (int x = proxIMAP.InfStart.x; x < proxIMAP.InfEnd.x; ++x)
                 {
-                    int tileCost                 = navMap.Map[mapIndex];
-                    proxIMAP.Influence[infIndex] = tileCost == INT_MAXVALUE ? 0 : ProxPrecomputes::Influence[infIndex];
-                    // printf("{ MapIndex: %i, MyIndex: %i, Dist: %i, Inf: %f }, ", mapIndex, myIndex, distance, inf);
+                    int   tileCost               = navMap.Map[mapIndex];
+                    float inf                    = ProxPrecomputes::Influence[infIndex];
+                    proxIMAP.Influence[infIndex] = tileCost == INT_MAXVALUE ? 0 : inf;
+                    // printf("{ MapIndex: %i, MyIndex: %i, Inf: %f }, ", mapIndex, infIndex, inf);
                     mapIndex++;
                     infIndex++;
                 }
