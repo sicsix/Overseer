@@ -4,7 +4,7 @@
   "scripts": {
     "prebuild": "set EMCC_DEBUG=0 && C:/Users/Tim/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/213.5744.254/bin/cmake/win/bin/cmake.exe --build C:/Users/Tim/Projects/Screeps/Overseer/wasm/cmake-build-release --target module",
     "build": "rollup -c --config-",
-    "debug-llvm": "C:/Users/Tim/Source/emsdk/upstream/emscripten/em++.py -std=gnu++17 -S -O3 -emit-llvm ../wasm/src/common/Pathfinder.cpp -o ../wasm/debug/llvm-debug.ll -c -msimd128 -msse4.1 --no-entry -IC:../wasm/lib/linalg -IC:../wasm/lib/entt/src/entt -IC:../wasm/src",
+    "debug-llvm": "C:/Users/Tim/Source/emsdk/upstream/emscripten/em++.py -std=gnu++20 -S -O3 -emit-llvm -c -msimd128 -msse4.1 ../wasm/src/common/Pathfinder.cpp -o ../wasm/debug/llvm-debug.ll --no-entry -IC:../wasm/lib/linalg -IC:../wasm/lib/entt/src/entt -IC:../wasm/src",
     "lint": "gts lint",
     "clean": "gts clean",
     "compile": "tsc",

@@ -32,7 +32,7 @@ namespace Overseer::Systems
 
     struct ProxPrecomputes
     {
-        static float Influence[INFLUENCE_SIZE];
+        inline static float Influence[INFLUENCE_SIZE];
 
         ProxPrecomputes()
         {

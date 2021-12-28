@@ -11,7 +11,7 @@ namespace Overseer::Common
     class Navigation
     {
       public:
-        constexpr static byte TerrainCost[] = { 1, 255, 5 };
+        constexpr static int TerrainCost[] = { 1, INT_MAXVALUE, 5 };
     };
 } // namespace Overseer::Common
 

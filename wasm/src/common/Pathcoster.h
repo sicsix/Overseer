@@ -17,14 +17,32 @@ namespace Overseer::Common
         struct CostNode;
 
         NavMap                   NavigationMap;
-        CostNode*                BlankNodeSet;
-        CostNode*                NodeSet;
         PriorityQueue<int, Node> PriorityQueue;
 
       public:
         Pathcoster(NavMap& navMap);
 
-        bool GetCosts(int2& start, int2& goal, Components::Path& path);
+        void GetCosts(int2& orig, int* costs, int2& start, int2& end, int costMultiplier);
+
+      private:
+        static void GetCosts(NavMap&                           navMap,
+                             int2&                             orig,
+                             int*                              costs,
+                             int2&                             start,
+                             int2&                             end,
+                             int                               costMultiplier,
+                             Common::PriorityQueue<int, Node>& openSet);
+
+        static void ProcessDirections(NavMap&                           navMap,
+                                      int2&                             pos,
+                                      int                               index,
+                                      int                               parentCost,
+                                      int*                              costs,
+                                      int2&                             start,
+                                      int2&                             end,
+                                      int                               costMultiplier,
+                                      Common::PriorityQueue<int, Node>& openSet,
+                                      int4x2                            offsets)
     };
 } // namespace Overseer::Common
 

@@ -13,6 +13,8 @@ using namespace linalg;
 using uint = uint32_t;
 using byte = uint8_t;
 
+constexpr int INT_MAXVALUE = 2147483647;
+
 constexpr int  MAP_WIDTH  = 100;
 constexpr int  MAP_HEIGHT = 100;
 constexpr int  MAP_SIZE   = MAP_WIDTH * MAP_HEIGHT;

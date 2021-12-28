@@ -152,7 +152,7 @@ namespace Overseer::Systems
                 for (int x = proxIMAP.Start.x; x < proxIMAP.End.x; ++x)
                 {
                     int tileCost                 = navMap.Map[mapIndex];
-                    proxIMAP.Influence[infIndex] = tileCost == 255 ? 0 : ProxPrecomputes::Influence[infIndex];
+                    proxIMAP.Influence[infIndex] = tileCost == INT_MAXVALUE ? 0 : ProxPrecomputes::Influence[infIndex];
                     // printf("{ MapIndex: %i, MyIndex: %i, Dist: %i, Inf: %f }, ", mapIndex, myIndex, distance, inf);
                     mapIndex++;
                     infIndex++;
@@ -178,8 +178,15 @@ namespace Overseer::Systems
 
             // Is heal a threat? or just an indirect threat? SHould it be included in threat influence?
 
-            int costs[INFLUENCE_SIZE];
-            pathcoster.GetCosts(costs);
+            int costs[INFLUENCE_SIZE + 1];
+            // TODO need to make the first move cost 0? so even entities with 0 movement are dangerous, will need to factor in TicksPerMove as well
+            pathcoster.GetCosts(costs, threat.TicksPerMove);
+
+            for (int i = 0; i < INFLUENCE_SIZE; ++i)
+            {
+                int cost = costs[i];
+                costs[i] = cost == INT_MAXVALUE ? cost : cost * ;
+            }
 
             int mapIndex = threatIMAP.MapStartIndex;
             int infIndex = threatIMAP.InfStartIndex;

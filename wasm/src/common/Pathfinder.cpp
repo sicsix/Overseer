@@ -96,8 +96,7 @@ namespace Overseer::Common
             if (visitedNode.Cost < current.CostSoFar)
                 continue;
 
-            auto tileCost = navMap.Map[current.Index];
-            auto pos      = IndexToPos(current.Index, MAP_WIDTH); // Maybe store this in openSet?
+            auto pos = IndexToPos(current.Index, MAP_WIDTH); // Maybe store this in openSet?
 
             // printf("Index: %i   CostSoFar: %i    NodeCost: %i    NodeCameFrom: %i   TileCost: %i    Pos: { %i, %i
             // }\n",
@@ -206,7 +205,7 @@ namespace Overseer::Common
         // printf("Heuristics { %i, %i, %i, %i }\n", heuristics.x, heuristics.y, heuristics.z, heuristics.w);
 
         int4  expectedCosts = costSoFar + heuristics;
-        bool4 isTileValid   = (bool4)(!gequal(costSoFar, 255) & isPosInbounds & isBetterRoute);
+        bool4 isTileValid   = (bool4)(!gequal(costSoFar, INT_MAXVALUE) & isPosInbounds & isBetterRoute);
         currentIndexes      = select(isTileValid, currentIndexes, MAP_SIZE); // MAP_SIZE is outside map
 
         nodeSet[currentIndexes.x] = FinderNode(index, costSoFar.x);
