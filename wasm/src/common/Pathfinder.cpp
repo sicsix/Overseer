@@ -50,7 +50,7 @@ namespace Overseer::Common
         int startIndex = PosToIndex(start, MAP_WIDTH);
         int goalIndex  = PosToIndex(goal, MAP_WIDTH);
 
-        // printf("Start Index: %i  - Goal Index: %i\n", startIndex, goalIndex);
+        // printf("InfStart Index: %i  - Goal Index: %i\n", startIndex, goalIndex);
 
         if (startIndex < 0 || startIndex >= MAP_SIZE || goalIndex < 0 || goalIndex >= MAP_SIZE)
             return false;

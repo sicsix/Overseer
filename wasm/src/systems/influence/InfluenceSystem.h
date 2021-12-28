@@ -82,9 +82,9 @@ namespace Overseer::Systems
             int mapIndex = creepIMAP.MapStartIndex;
             int infIndex = creepIMAP.InfStartIndex;
 
-            for (int y = creepIMAP.Start.y; y < creepIMAP.End.y; ++y)
+            for (int y = creepIMAP.InfStart.y; y < creepIMAP.InfEnd.y; ++y)
             {
-                for (int x = creepIMAP.Start.x; x < creepIMAP.End.x; ++x)
+                for (int x = creepIMAP.InfStart.x; x < creepIMAP.InfEnd.x; ++x)
                 {
                     float influence          = imap.Influence[mapIndex];
                     float creepInfluence     = creepIMAP.Influence[infIndex];
@@ -105,9 +105,9 @@ namespace Overseer::Systems
             int infIndex = creepIMAP.InfStartIndex;
 
             // printf("{ ");
-            for (int y = creepIMAP.Start.y; y < creepIMAP.End.y; ++y)
+            for (int y = creepIMAP.InfStart.y; y < creepIMAP.InfEnd.y; ++y)
             {
-                for (int x = creepIMAP.Start.x; x < creepIMAP.End.x; ++x)
+                for (int x = creepIMAP.InfStart.x; x < creepIMAP.InfEnd.x; ++x)
                 {
                     imap.Influence[mapIndex] += creepIMAP.Influence[infIndex];
                     // printf("%f, ", creepIMAP.Influence[infIndex]);
@@ -122,34 +122,38 @@ namespace Overseer::Systems
 
         void ClampAndSetBounds(Pos pos, CreepIMAP& creepIMAP)
         {
-            int2 clampedPos = clamp(pos.Val, INFLUENCE_CENTER, MAP_WIDTH - INFLUENCE_RADIUS);
-            int2 offset     = clampedPos - pos.Val;
+            int2 worldStartUnclamped = pos.Val - INFLUENCE_RADIUS;
+            int2 worldEndUnclamped   = pos.Val + INFLUENCE_RADIUS;
 
-            creepIMAP.InfCenter     = INFLUENCE_CENTER + (pos.Val - clampedPos);
-            creepIMAP.MapStartIndex = (clampedPos.y - INFLUENCE_RADIUS) * MAP_WIDTH + (clampedPos.x - INFLUENCE_RADIUS);
-            creepIMAP.Start         = max(offset, 0);
-            creepIMAP.End           = INFLUENCE_WIDTH - min(offset, 0);
+            creepIMAP.WorldStart    = max(worldStartUnclamped, 0);
+            creepIMAP.WorldEnd      = min(worldEndUnclamped, MAP_WIDTH);
+            creepIMAP.WorldCenter   = pos.Val;
+            creepIMAP.MapStartIndex = creepIMAP.WorldStart.y * MAP_WIDTH + creepIMAP.WorldStart.x;
 
-            int width = creepIMAP.End.x - creepIMAP.Start.x;
+            int2 offset             = creepIMAP.WorldStart - pos.Val;
+            creepIMAP.InfStart      = max(offset, 0);
+            creepIMAP.InfEnd        = INFLUENCE_WIDTH - min(offset, 0);
+            creepIMAP.InfCenter     = INFLUENCE_CENTER - offset;
+            creepIMAP.InfStartIndex = creepIMAP.InfStart.y * INFLUENCE_WIDTH + creepIMAP.InfStart.x;
 
-            creepIMAP.InfYIncrement = INFLUENCE_WIDTH - width;
+            int width               = creepIMAP.InfEnd.x - creepIMAP.InfStart.x;
             creepIMAP.MapYIncrement = MAP_WIDTH - width;
-            creepIMAP.InfStartIndex = creepIMAP.Start.y * INFLUENCE_WIDTH + creepIMAP.Start.x;
+            creepIMAP.InfYIncrement = INFLUENCE_WIDTH - width;
         }
 
         void CalculateProximityInfluence(Common::NavMap navMap, CreepProxIMAP& proxIMAP)
         {
             // printf(
-            //     "Start: { %i, %i }    End: { %i, %i }    Width: %i    WidthDiff: %i    MapIndex: %i    MyIndex:
+            //     "InfStart: { %i, %i }    InfEnd: { %i, %i }    Width: %i    WidthDiff: %i    MapIndex: %i    MyIndex:
             //     %i\n", start.x, start.y, end.x, end.y, width, widthDiff, mapIndex, myIndex);
 
             int mapIndex = proxIMAP.MapStartIndex;
             int infIndex = proxIMAP.InfStartIndex;
 
             // printf("{ ");
-            for (int y = proxIMAP.Start.y; y < proxIMAP.End.y; ++y)
+            for (int y = proxIMAP.InfStart.y; y < proxIMAP.InfEnd.y; ++y)
             {
-                for (int x = proxIMAP.Start.x; x < proxIMAP.End.x; ++x)
+                for (int x = proxIMAP.InfStart.x; x < proxIMAP.InfEnd.x; ++x)
                 {
                     int tileCost                 = navMap.Map[mapIndex];
                     proxIMAP.Influence[infIndex] = tileCost == INT_MAXVALUE ? 0 : ProxPrecomputes::Influence[infIndex];
@@ -178,37 +182,24 @@ namespace Overseer::Systems
 
             // Is heal a threat? or just an indirect threat? SHould it be included in threat influence?
 
+            // Calcalute ATTACK threat
             int costs[INFLUENCE_SIZE + 1];
-            // TODO need to make the first move cost 0? so even entities with 0 movement are dangerous, will need to factor in TicksPerMove as well
-            pathcoster.GetCosts(costs, threat.TicksPerMove);
-
-            for (int i = 0; i < INFLUENCE_SIZE; ++i)
-            {
-                int cost = costs[i];
-                costs[i] = cost == INT_MAXVALUE ? cost : cost * ;
-            }
+            pathcoster.GetAttackCosts(threatIMAP, threat.TicksPerMove, costs);
 
             int mapIndex = threatIMAP.MapStartIndex;
             int infIndex = threatIMAP.InfStartIndex;
 
-            if (threat.TicksPerMove != -1)
+            for (int y = threatIMAP.InfStart.y; y < threatIMAP.InfEnd.y; ++y)
             {
-                for (int y = threatIMAP.Start.y; y < threatIMAP.End.y; ++y)
+                for (int x = threatIMAP.InfStart.x; x < threatIMAP.InfEnd.x; ++x)
                 {
-                    for (int x = threatIMAP.Start.x; x < threatIMAP.End.x; ++x)
-                    {
-                        float inf = ThreatPrecomputes::AttackLookup[min(costs[infIndex], 7)] * threat.AttackDamage * 0.1f;
-                        threatIMAP.Influence[infIndex] = inf;
-                        mapIndex++;
-                        infIndex++;
-                    }
-                    mapIndex += threatIMAP.MapYIncrement;
-                    infIndex += threatIMAP.InfYIncrement;
+                    float inf = ThreatPrecomputes::AttackLookup[min(costs[infIndex], 7)] * threat.AttackDamage * 0.1f;
+                    threatIMAP.Influence[infIndex] = inf;
+                    mapIndex++;
+                    infIndex++;
                 }
-            }
-            else
-            {
-                // Zero out threat map and draw around creep range 1 the attack threat
+                mapIndex += threatIMAP.MapYIncrement;
+                infIndex += threatIMAP.InfYIncrement;
             }
         }
 

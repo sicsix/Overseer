@@ -26,6 +26,11 @@ namespace Overseer::Common::Math
         return int4(positions.y * width + positions.x);
     }
 
+    inline static bool IsPosInbounds(int2& cell, int2 dimensions)
+    {
+        return ((cell < dimensions) & (cell >= int2(0))) == 1;
+    }
+
     inline static int4 IsPosInboundsSIMD(int4x2& positions, int2 dimensions)
     {
         // bool4 a = less(positions.x, dimensions.x);
@@ -36,6 +41,12 @@ namespace Overseer::Common::Math
         return less(positions.x, dimensions.x) & gequal(positions.x, 0) & less(positions.y, dimensions.y) &
                gequal(positions.y, 0);
     }
+    inline static int4 IsPosInboundsSIMD(int4x2& positions, int2& start, int2 end)
+    {
+        return less(positions.x, end.x) & gequal(positions.x, start.x) & less(positions.y, end.y) &
+               gequal(positions.y, start.y);
+    }
+
 
     inline static int DistanceManhattan(int2& orig, int2& dest)
     {

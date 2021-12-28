@@ -172,12 +172,15 @@ namespace Overseer::Components
 
     struct CreepIMAP
     {
-        int2   Start;
-        int2   End;
-        int2   InfCenter;
+        int2   WorldStart;
+        int2   WorldEnd;
+        int2   WorldCenter;
         int    MapStartIndex;
-        int    InfStartIndex;
         int    MapYIncrement;
+        int2   InfStart;
+        int2   InfEnd;
+        int2   InfCenter;
+        int    InfStartIndex;
         int    InfYIncrement;
         float* Influence = new float[INFLUENCE_SIZE];
     };

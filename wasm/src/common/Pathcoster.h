@@ -14,35 +14,30 @@ namespace Overseer::Common
     class Pathcoster
     {
       private:
-        struct CostNode;
-
         NavMap                   NavigationMap;
         PriorityQueue<int, Node> PriorityQueue;
 
       public:
         Pathcoster(NavMap& navMap);
 
-        void GetCosts(int2& orig, int* costs, int2& start, int2& end, int costMultiplier);
+        void GetAttackCosts(CreepThreatIMAP& threatIMAP, int costMultiplier, int* costs);
 
       private:
-        static void GetCosts(NavMap&                           navMap,
-                             int2&                             orig,
-                             int*                              costs,
-                             int2&                             start,
-                             int2&                             end,
-                             int                               costMultiplier,
-                             Common::PriorityQueue<int, Node>& openSet);
+        static void GetAttackCosts(NavMap&                           navMap,
+                                   CreepThreatIMAP&                  threatIMAP,
+                                   int                               costMultiplier,
+                                   int*                              costs,
+                                   Common::PriorityQueue<int, Node>& openSet);
 
         static void ProcessDirections(NavMap&                           navMap,
-                                      int2&                             pos,
-                                      int                               index,
+                                      int2&                             currWorldPos,
+                                      int2&                             worldStart,
+                                      int2&                             worldEnd,
                                       int                               parentCost,
-                                      int*                              costs,
-                                      int2&                             start,
-                                      int2&                             end,
                                       int                               costMultiplier,
+                                      int*                              costs,
                                       Common::PriorityQueue<int, Node>& openSet,
-                                      int4x2                            offsets)
+                                      int4x2                            offsets);
     };
 } // namespace Overseer::Common
 

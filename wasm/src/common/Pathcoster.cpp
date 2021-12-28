@@ -14,141 +14,135 @@ namespace Overseer::Common
         PriorityQueue = Overseer::Common::PriorityQueue<int, Node>();
     }
 
-    // Start and End must be in World space
-    void Pathcoster::GetCosts(int2& orig, int* costs, int2& start, int2& end, int costMultiplier)
+    void Pathcoster::GetAttackCosts(CreepThreatIMAP& threatIMAP, int costMultiplier, int* costs)
     {
-        GetCosts(NavigationMap, orig, costs, start, end, int costMultiplier, PriorityQueue);
+        GetAttackCosts(NavigationMap, threatIMAP, costMultiplier, costs, PriorityQueue);
         PriorityQueue.Clear();
     }
 
-    void Pathcoster::GetCosts(NavMap&                           navMap,
-                              int2&                             orig,
-                              int*                              costs,
-                              int2&                             start,
-                              int2&                             end,
-                              int                               costMultiplier,
-                              Common::PriorityQueue<int, Node>& openSet)
+    // TODO rename GetAttackCosts
+    void Pathcoster::GetAttackCosts(NavMap&                           navMap,
+                                    CreepThreatIMAP&                  threatIMAP,
+                                    int                               costMultiplier,
+                                    int*                              costs,
+                                    Common::PriorityQueue<int, Node>& openSet)
     {
         memset(costs, INT_MAXVALUE, sizeof(int) * (INFLUENCE_SIZE + 1));
 
-        int startIndex    = PosToIndex(orig, MAP_WIDTH);
-        int infStartIndex = PosToIndex(, INFLUENCE_WIDTH);
+        int centerIndex = PosToIndex(threatIMAP.WorldCenter, MAP_WIDTH);
 
-        for (int y = 0; y < ; ++y)
+        // Set the
+        int2 centerStart = max(threatIMAP.WorldCenter - 1, 0);
+        int2 centerEnd   = min(threatIMAP.WorldCenter + 1, MAP_WIDTH);
+        int2 infStart    = threatIMAP.InfCenter - (threatIMAP.WorldCenter - threatIMAP.WorldStart);
+
+        int width         = centerEnd.x - centerStart.x;
+        int mapYIncrement = MAP_WIDTH - width;
+        int infYIncrement = INFLUENCE_WIDTH - width;
+
+        int mapIndex = PosToIndex(centerStart, MAP_WIDTH);
+        int infIndex = PosToIndex(infStart, INFLUENCE_WIDTH);
+
+        for (int y = centerStart.y; y < centerEnd.y; ++y)
         {
-            for (int x = 0; x < ; ++x)
+            for (int x = centerStart.x; x < centerEnd.x; ++x)
             {
-                int currIndex = ;
-                if (navMap[currIndex] != INT_MAXVALUE)
+                if (navMap.Map[mapIndex] != INT_MAXVALUE)
                 {
                     costs[infIndex] = 0;
 
-                    if (currIndex != startIndex)
-                        openSet.Push(0, Node(currIndex, 0))
+                    if (mapIndex != centerIndex)
+                        openSet.Push(0, Node(mapIndex, 0));
                 }
+                mapIndex++;
+                infIndex++;
             }
+            mapIndex += mapYIncrement;
+            infIndex += infYIncrement;
         }
 
         while (!openSet.Empty())
         {
             const Node current = openSet.Pop();
 
+            int2 currWorldPos = IndexToPos(current.Index, MAP_WIDTH);
+            int2 currInfPos   = currWorldPos - threatIMAP.WorldStart;
+            int  currInfIndex = PosToIndex(currInfPos, INFLUENCE_WIDTH);
+
             auto visitedNodeCost = costs[currInfIndex];
 
             if (visitedNodeCost < current.CostSoFar)
                 continue;
 
-            auto pos = IndexToPos(current.Index, MAP_WIDTH);
-
-            ProcessDirections(
-                navMap, pos, current.Index, visitedNodeCost, costs, start, end, openSet, CardinalOffsetsSIMD);
-            ProcessDirections(
-                navMap, pos, current.Index, visitedNodeCost, costs, start, end, openSet, DiagonalOffsetsSIMD);
+            ProcessDirections(navMap,
+                              currWorldPos,
+                              threatIMAP.WorldStart,
+                              threatIMAP.WorldEnd,
+                              visitedNodeCost,
+                              costMultiplier,
+                              costs,
+                              openSet,
+                              CardinalOffsetsSIMD);
+            ProcessDirections(navMap,
+                              currWorldPos,
+                              threatIMAP.WorldStart,
+                              threatIMAP.WorldEnd,
+                              visitedNodeCost,
+                              costMultiplier,
+                              costs,
+                              openSet,
+                              DiagonalOffsetsSIMD);
         }
     }
 
     void Pathcoster::ProcessDirections(NavMap&                           navMap,
-                                       int2&                             pos,
-                                       int                               index,
+                                       int2&                             currWorldPos,
+                                       int2&                             worldStart,
+                                       int2&                             worldEnd,
                                        int                               parentCost,
-                                       int*                              costs,
-                                       int2&                             start,
-                                       int2&                             end,
                                        int                               costMultiplier,
+                                       int*                              costs,
                                        Common::PriorityQueue<int, Node>& openSet,
                                        int4x2                            offsets)
     {
-        int4x2 currentPositions       = int4x2(int4(pos.x), int4(pos.y)) + offsets;
-        int4   isPosInbounds          = IsPosInboundsSIMD(currentPositions, MAP_DIMENSIONS);
-        int4   isPosInInfluenceBounds = IsPosInInfluenceBoundsSIMD(currentPositions, start, end);
-        int4   currentIndexes         = PosToIndexSIMD(currentPositions, MAP_WIDTH);
-        currentIndexes                = clamp(currentIndexes, 0, MAP_SIZE - 1);
+        int4x2 currentWorldPositions = int4x2(int4(currWorldPos.x), int4(currWorldPos.y)) + offsets;
+        int4   isPosInbounds         = IsPosInboundsSIMD(currentWorldPositions, worldStart, worldEnd);
+        int4   currentWorldIndexes   = PosToIndexSIMD(currentWorldPositions, MAP_WIDTH);
+        currentWorldIndexes          = clamp(currentWorldIndexes, 0, MAP_SIZE - 1);
 
-        // printf(
-        //     "CurrentPostions: {{ %i, %i }, { %i, %i }, { %i, %i } { %i, %i }   IsPosInbounds: { %i, %i, %i, %i }
-        //     CurrentIndexes: { %i, %i, %i, %i }\n", currentPositions.x.x, currentPositions.y.x, currentPositions.x.y,
-        //     currentPositions.y.y,
-        //     currentPositions.x.z,
-        //     currentPositions.y.z,
-        //     currentPositions.x.w,
-        //     currentPositions.y.w,
-        //     isPosInbounds.x,
-        //     isPosInbounds.y,
-        //     isPosInbounds.y,
-        //     isPosInbounds.z,
-        //     currentIndexes.x,
-        //     currentIndexes.y,
-        //     currentIndexes.z,
-        //     currentIndexes.w);
-
-        int4 costSoFar = int4(navMap.Map[currentIndexes.x],
-                              navMap.Map[currentIndexes.y],
-                              navMap.Map[currentIndexes.z],
-                              navMap.Map[currentIndexes.w]) *
+        int4 costSoFar = int4(navMap.Map[currentWorldIndexes.x],
+                              navMap.Map[currentWorldIndexes.y],
+                              navMap.Map[currentWorldIndexes.z],
+                              navMap.Map[currentWorldIndexes.w]) *
                              costMultiplier +
                          parentCost;
 
-        int4 prevCostSoFar = int4(nodeSet[currentIndexes.x].Cost,
-                                  nodeSet[currentIndexes.y].Cost,
-                                  nodeSet[currentIndexes.z].Cost,
-                                  nodeSet[currentIndexes.w].Cost);
+        int4x2 currentInfPositions = currentWorldPositions - int4x2(int4(worldStart.x), int4(worldStart.y));
+        int4   currentInfIndexes   = PosToIndexSIMD(currentInfPositions, INFLUENCE_WIDTH);
 
-        // printf("CostSoFar: { %i, %i, %i, %i }    PrevCostSoFar { %i, %i, %i, %i }\n",
-        //        costSoFar.x,
-        //        costSoFar.y,
-        //        costSoFar.z,
-        //        costSoFar.w,
-        //        prevCostSoFar.x,
-        //        prevCostSoFar.y,
-        //        prevCostSoFar.z,
-        //        prevCostSoFar.w);
+        int4 prevCostSoFar = int4(costs[currentInfIndexes.x],
+                                  costs[currentInfIndexes.y],
+                                  costs[currentInfIndexes.z],
+                                  costs[currentInfIndexes.w]);
 
         bool4 isBetterRoute = less(costSoFar, prevCostSoFar);
-        // printf(
-        //     "IsBetterRoute { %i, %i, %i, %i }\n", isBetterRoute.x, isBetterRoute.y, isBetterRoute.z,
-        //     isBetterRoute.w);
 
-        bool4 isTileValid =
-            (bool4)(!gequal(costSoFar, INT_MAXVALUE) & isPosInbounds & isPosInInfluenceBounds & isBetterRoute);
-        currentIndexes = select(isTileValid, currentIndexes, MAP_SIZE); // MAP_SIZE is outside map
+        bool4 isTileValid = (bool4)(!gequal(costSoFar, INT_MAXVALUE) & isPosInbounds & isBetterRoute);
+        currentInfIndexes =
+            select(isTileValid, currentInfIndexes, INFLUENCE_SIZE); // INFLUENCE_SIZE is outside influence map
 
-        nodeSet[currentIndexes.x] = CostNode(costSoFar.x);
-        nodeSet[currentIndexes.y] = CostNode(costSoFar.y);
-        nodeSet[currentIndexes.z] = CostNode(costSoFar.z);
-        nodeSet[currentIndexes.w] = CostNode(costSoFar.w);
-
-        // printf("IsTileValid { %i, %i, %i, %i }\n", isTileValid.x, isTileValid.y, isTileValid.z, isTileValid.w);
-        // printf(
-        //     "ExpectedCosts { %i, %i, %i, %i }\n", expectedCosts.x, expectedCosts.y, expectedCosts.z,
-        //     expectedCosts.w);
+        costs[currentInfIndexes.x] = costSoFar.x;
+        costs[currentInfIndexes.y] = costSoFar.y;
+        costs[currentInfIndexes.z] = costSoFar.z;
+        costs[currentInfIndexes.w] = costSoFar.w;
 
         if (isTileValid.x)
-            openSet.Push(costSoFar.x, Node(currentIndexes.x, costSoFar.x));
+            openSet.Push(costSoFar.x, Node(currentWorldIndexes.x, costSoFar.x));
         if (isTileValid.y)
-            openSet.Push(costSoFar.y, Node(currentIndexes.y, costSoFar.y));
+            openSet.Push(costSoFar.y, Node(currentWorldIndexes.y, costSoFar.y));
         if (isTileValid.z)
-            openSet.Push(costSoFar.z, Node(currentIndexes.z, costSoFar.z));
+            openSet.Push(costSoFar.z, Node(currentWorldIndexes.z, costSoFar.z));
         if (isTileValid.w)
-            openSet.Push(costSoFar.w, Node(currentIndexes.w, costSoFar.w));
+            openSet.Push(costSoFar.w, Node(currentWorldIndexes.w, costSoFar.w));
     }
 } // namespace Overseer::Common
