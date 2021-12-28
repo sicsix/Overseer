@@ -53,7 +53,13 @@ namespace Overseer::Components
 
     struct CreepIMAP
     {
-        int   StartIndex = 0;
+        int2 Start;
+        int2 End;
+        int2 InfCenter;
+        int MapStartIndex;
+        int InfStartIndex;
+        int MapYIncrement;
+        int InfYIncrement;
         float* Influence = new float[INFLUENCE_SIZE];
     };
 
@@ -68,4 +74,4 @@ namespace Overseer::Components
 } // namespace Overseer::Components
 
 using namespace Overseer::Components;
-#endif //OVERSEER_WASM_SRC_COMPONENTS_COMPONENTS_H_
+#endif // OVERSEER_WASM_SRC_COMPONENTS_COMPONENTS_H_

@@ -47,36 +47,37 @@ namespace Overseer::Systems
             auto view = registry.view<My, Pos, CreepProxIMAP, CreepThreatIMAP>();
 
             // bool ranOnce = false;
-            for (auto entity : view)
+            for (int i = 0; i < 100; ++i)
             {
-                // if (ranOnce)
-                //     break;
-                // ranOnce = true;
+                for (auto entity : view)
+                {
+                    // if (ranOnce)
+                    //     break;
+                    // ranOnce = true;
 
-                auto [pos, prox, threat] = view.get(entity);
+                    auto [pos, prox, threat] = view.get(entity);
 
-                // SubtractInfluence(friendlyProx, prox);
-                // SubtractInfluence(friendlyThreat, threat);
+                    // SubtractInfluence(friendlyProx, prox);
+                    // SubtractInfluence(friendlyThreat, threat);
 
-                int2 clampedPos   = int2();
-                int2 center       = int2();
-                int  startIndex   = ClampPosition(pos, clampedPos, center);
-                prox.StartIndex   = startIndex;
-                threat.StartIndex = startIndex;
+                    // int2 clampedPos    = int2();
+                    // int2 center        = int2();
+                    // int  startIndex    = ClampPosition(pos, clampedPos, center);
+                    // prox.StartIndex    = startIndex;
+                    // prox.StartOffset   = clampedPos - pos.Val;
+                    // threat.StartIndex  = startIndex;
+                    // threat.StartOffset = prox.StartOffset;
 
-                // printf("Entity: %i    Pos: { %i, %i }    ClampedPos: { %i, %i }    Center: { %i, %i }\n",
-                //        entity,
-                //        pos.Val.x,
-                //        pos.Val.y,
-                //        clampedPos.x,
-                //        clampedPos.y,
-                //        center.x,
-                //        center.y);
+                    ClampAndSetBounds(pos, prox);
+                    ClampAndSetBounds(pos, threat);
 
-                CalculateProximityInfluence(navMap, prox, center);
+                    // printf("Entity: %i    Pos: { %i, %i }\n", entity, pos.Val.x, pos.Val.y);
 
-                AddInfluence(friendlyProx, prox);
-                AddInfluence(friendlyThreat, threat);
+                    CalculateProximityInfluence(navMap, prox, ProxSplat);
+
+                    AddInfluence(friendlyProx, prox);
+                    AddInfluence(friendlyThreat, threat);
+                }
             }
 
             // DebugIMAP(friendlyProx, 0.01f, 500);
@@ -90,75 +91,93 @@ namespace Overseer::Systems
 
         void SubtractInfluence(IMAP imap, CreepIMAP creepIMAP)
         {
-            int mapIndex = creepIMAP.StartIndex;
-            int myIndex  = 0;
+            int mapIndex = creepIMAP.MapStartIndex;
+            int infIndex = creepIMAP.InfStartIndex;
 
-            for (int y = 0; y < INFLUENCE_WIDTH; ++y)
+            for (int y = creepIMAP.Start.y; y < creepIMAP.End.y; ++y)
             {
-                for (int x = 0; x < INFLUENCE_WIDTH; ++x)
+                for (int x = creepIMAP.Start.x; x < creepIMAP.End.x; ++x)
                 {
                     float influence          = imap.Influence[mapIndex];
-                    float creepInfluence     = creepIMAP.Influence[myIndex];
+                    float creepInfluence     = creepIMAP.Influence[infIndex];
                     float newInfluence       = influence - creepInfluence;
                     newInfluence             = newInfluence < 0.005f ? 0.0f : newInfluence;
                     imap.Influence[mapIndex] = newInfluence;
                     mapIndex++;
-                    myIndex++;
+                    infIndex++;
                 }
-                mapIndex += INFLUENCE_MAP_STEP_SIZE;
+                mapIndex += creepIMAP.MapYIncrement;
+                infIndex += creepIMAP.InfYIncrement;
             }
         }
 
         void AddInfluence(IMAP imap, CreepIMAP creepIMAP)
         {
-            int mapIndex = creepIMAP.StartIndex;
-            int myIndex  = 0;
+            int mapIndex = creepIMAP.MapStartIndex;
+            int infIndex = creepIMAP.InfStartIndex;
 
             // printf("{ ");
-            for (int y = 0; y < INFLUENCE_WIDTH; ++y)
+            for (int y = creepIMAP.Start.y; y < creepIMAP.End.y; ++y)
             {
-                for (int x = 0; x < INFLUENCE_WIDTH; ++x)
+                for (int x = creepIMAP.Start.x; x < creepIMAP.End.x; ++x)
                 {
-                    // printf("%f, ", creepIMAP.Influence[myIndex]);
-                    imap.Influence[mapIndex] += creepIMAP.Influence[myIndex];
+                    imap.Influence[mapIndex] += creepIMAP.Influence[infIndex];
+                    // printf("%f, ", creepIMAP.Influence[infIndex]);
                     mapIndex++;
-                    myIndex++;
+                    infIndex++;
                 }
-                mapIndex += INFLUENCE_MAP_STEP_SIZE;
+                mapIndex += creepIMAP.MapYIncrement;
+                infIndex += creepIMAP.InfYIncrement;
             }
             // printf("} \n");
         }
 
         int ClampPosition(Pos pos, int2& clampedPos, int2& center)
         {
-            clampedPos = clamp(pos.Val, INFLUENCE_CENTER, MAP_WIDTH - INFLUENCE_CENTER);
-            center     = int2(INFLUENCE_CENTER, INFLUENCE_CENTER) + (pos.Val - clampedPos);
-            return (clampedPos.y - INFLUENCE_CENTER) * MAP_WIDTH + (clampedPos.x - INFLUENCE_CENTER);
+            clampedPos = clamp(pos.Val, INFLUENCE_CENTER, MAP_WIDTH - INFLUENCE_RADIUS);
+            center     = INFLUENCE_CENTER + (pos.Val - clampedPos);
+            return (clampedPos.y - INFLUENCE_RADIUS) * MAP_WIDTH + (clampedPos.x - INFLUENCE_RADIUS);
         }
 
-        void CalculateProximityInfluence(Common::NavMap navMap, CreepProxIMAP proxIMAP, int2& center)
+        void ClampAndSetBounds(Pos pos, CreepIMAP& creepIMAP)
         {
-            // TODO pre calculate the prox splats, need to handle being offset as well
+            int2 clampedPos = clamp(pos.Val, INFLUENCE_CENTER, MAP_WIDTH - INFLUENCE_RADIUS);
+            int2 offset     = clampedPos - pos.Val;
 
-            int mapIndex = proxIMAP.StartIndex;
-            int myIndex  = 0;
+            creepIMAP.InfCenter     = INFLUENCE_CENTER + (pos.Val - clampedPos);
+            creepIMAP.MapStartIndex = (clampedPos.y - INFLUENCE_RADIUS) * MAP_WIDTH + (clampedPos.x - INFLUENCE_RADIUS);
+            creepIMAP.Start         = max(offset, 0);
+            creepIMAP.End           = INFLUENCE_WIDTH - min(offset, 0);
+
+            int width = creepIMAP.End.x - creepIMAP.Start.x;
+
+            creepIMAP.InfYIncrement = INFLUENCE_WIDTH - width;
+            creepIMAP.MapYIncrement = MAP_WIDTH - width;
+            creepIMAP.InfStartIndex = creepIMAP.Start.y * INFLUENCE_WIDTH + creepIMAP.Start.x;
+        }
+
+        void CalculateProximityInfluence(Common::NavMap navMap, CreepProxIMAP& proxIMAP, ProxSplatMap proxSplat)
+        {
+            // printf(
+            //     "Start: { %i, %i }    End: { %i, %i }    Width: %i    WidthDiff: %i    MapIndex: %i    MyIndex:
+            //     %i\n", start.x, start.y, end.x, end.y, width, widthDiff, mapIndex, myIndex);
+
+            int mapIndex = proxIMAP.MapStartIndex;
+            int infIndex = proxIMAP.InfStartIndex;
+
             // printf("{ ");
-            for (int y = 0; y < INFLUENCE_WIDTH; ++y)
+            for (int y = proxIMAP.Start.y; y < proxIMAP.End.y; ++y)
             {
-                for (int x = 0; x < INFLUENCE_WIDTH; ++x)
+                for (int x = proxIMAP.Start.x; x < proxIMAP.End.x; ++x)
                 {
-                    int   tileCost              = navMap.Map[mapIndex];
-                    int   distance              = DistanceChebyshev(center, int2(x, y));
-                    float inf                   = CalculateInverse2PolyInfluence(0.5f, distance, INFLUENCE_CENTER);
-                    inf                         = tileCost == 255 ? 0 : inf;
-                    proxIMAP.Influence[myIndex] = inf;
+                    int   tileCost               = navMap.Map[mapIndex];
+                    proxIMAP.Influence[infIndex] = tileCost == 255 ? 0 : proxSplat.Influence[infIndex];
+                    // printf("{ MapIndex: %i, MyIndex: %i, Dist: %i, Inf: %f }, ", mapIndex, myIndex, distance, inf);
                     mapIndex++;
-                    myIndex++;
-
-                    // printf("%f, ", inf);
-                    // printf("{ Dist: %i, Inf: %f }, ", distance, inf);
+                    infIndex++;
                 }
-                mapIndex += INFLUENCE_MAP_STEP_SIZE;
+                mapIndex += proxIMAP.MapYIncrement;
+                infIndex += proxIMAP.InfYIncrement;
             }
             // printf("} \n");
         }

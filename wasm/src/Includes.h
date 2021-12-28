@@ -18,9 +18,10 @@ constexpr int  MAP_HEIGHT = 100;
 constexpr int  MAP_SIZE   = MAP_WIDTH * MAP_HEIGHT;
 constexpr int2 MAP_DIMENSIONS(MAP_WIDTH, MAP_HEIGHT);
 
-constexpr int INFLUENCE_WIDTH         = 13;
-constexpr int INFLUENCE_SIZE          = INFLUENCE_WIDTH * INFLUENCE_WIDTH;
-constexpr int INFLUENCE_MAP_STEP_SIZE = MAP_WIDTH - INFLUENCE_WIDTH;
-constexpr int INFLUENCE_CENTER        = 6;
+constexpr int  INFLUENCE_WIDTH         = 13;
+constexpr int  INFLUENCE_SIZE          = INFLUENCE_WIDTH * INFLUENCE_WIDTH;
+constexpr int  INFLUENCE_MAP_STEP_SIZE = MAP_WIDTH - INFLUENCE_WIDTH;
+constexpr int  INFLUENCE_RADIUS        = 6;
+constexpr int2 INFLUENCE_CENTER        = int2(INFLUENCE_RADIUS, INFLUENCE_RADIUS);
 
 #endif // OVERSEER_WASM_SRC_INCLUDES_H_

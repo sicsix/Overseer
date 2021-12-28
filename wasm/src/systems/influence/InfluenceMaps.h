@@ -5,6 +5,7 @@
 #ifndef OVERSEER_WASM_SRC_SYSTEMS_INFLUENCE_INFLUENCEMAPS_H_
 #define OVERSEER_WASM_SRC_SYSTEMS_INFLUENCE_INFLUENCEMAPS_H_
 #include "Includes.h"
+#include "common/Math.h"
 
 namespace Overseer::Systems
 {
@@ -31,7 +32,22 @@ namespace Overseer::Systems
 
     struct ProxSplatMap
     {
-        float* Influence = new float[INFLUENCE_SIZE];
+        float Influence[INFLUENCE_SIZE];
+
+        ProxSplatMap()
+        {
+            int infIndex = 0;
+
+            for (int y = 0; y < INFLUENCE_WIDTH; ++y)
+            {
+                for (int x = 0; x < INFLUENCE_WIDTH; ++x)
+                {
+                    int distance = DistanceChebyshev(INFLUENCE_CENTER, int2(x, y));
+                    Influence[infIndex] = CalculateInverse2PolyInfluence(0.5f, distance, INFLUENCE_RADIUS);
+                    infIndex++;
+                }
+            }
+        }
     };
 } // namespace Overseer::Systems
 
