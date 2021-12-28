@@ -105,10 +105,23 @@ namespace Overseer::Imports
             registry.emplace_or_replace<Health>(entity, Health(hits, hitsMax));
 
             auto bodyLength = buffer[currIndex++];
-
-            // TODO add code here to decode body length
-
+            auto body       = Body(bodyLength, (BodyPart*)(&buffer[currIndex]));
+            registry.emplace_or_replace<Body>(entity, body);
+            auto attributes = Attributes(body);
+            registry.emplace_or_replace<Attributes>(entity, attributes);
+            registry.emplace_or_replace<Threat>(entity, Threat(attributes));
             currIndex += (bodyLength >> 1) + bodyLength % 2;
+
+            // printf(
+            //     "Entity: %i    TicksPerMove: %i    Move: %i    Work: %i    Carry: %i    Attack: %i    RangedAttack:
+            //     %i    Tough: %i    Heal: %i\n", entity, attributes.TicksPerMove, attributes.Move, attributes.Work,
+            //     attributes.Carry,
+            //     attributes.Attack,
+            //     attributes.RangedAttack,
+            //     attributes.Tough,
+            //     attributes.Heal);
+
+
         }
     }
 } // namespace Overseer::Imports
