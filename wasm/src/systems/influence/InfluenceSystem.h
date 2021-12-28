@@ -9,6 +9,7 @@
 #include "InfluenceMaps.h"
 #include "commands/CommandHandler.h"
 #include "common/Math.h"
+#include "common/Pathcoster.h"
 
 namespace Overseer::Systems
 {
@@ -47,37 +48,26 @@ namespace Overseer::Systems
             auto view = registry.view<My, Pos, CreepProxIMAP, CreepThreatIMAP>();
 
             // bool ranOnce = false;
-            for (int i = 0; i < 100; ++i)
+            for (auto entity : view)
             {
-                for (auto entity : view)
-                {
-                    // if (ranOnce)
-                    //     break;
-                    // ranOnce = true;
+                // if (ranOnce)
+                //     break;
+                // ranOnce = true;
 
-                    auto [pos, prox, threat] = view.get(entity);
+                auto [pos, prox, threat] = view.get(entity);
 
-                    // SubtractInfluence(friendlyProx, prox);
-                    // SubtractInfluence(friendlyThreat, threat);
+                // SubtractInfluence(friendlyProx, prox);
+                // SubtractInfluence(friendlyThreat, threat);
 
-                    // int2 clampedPos    = int2();
-                    // int2 center        = int2();
-                    // int  startIndex    = ClampPosition(pos, clampedPos, center);
-                    // prox.StartIndex    = startIndex;
-                    // prox.StartOffset   = clampedPos - pos.Val;
-                    // threat.StartIndex  = startIndex;
-                    // threat.StartOffset = prox.StartOffset;
+                ClampAndSetBounds(pos, prox);
+                ClampAndSetBounds(pos, threat);
 
-                    ClampAndSetBounds(pos, prox);
-                    ClampAndSetBounds(pos, threat);
+                // printf("Entity: %i    Pos: { %i, %i }\n", entity, pos.Val.x, pos.Val.y);
 
-                    // printf("Entity: %i    Pos: { %i, %i }\n", entity, pos.Val.x, pos.Val.y);
+                CalculateProximityInfluence(navMap, prox, ProxSplat);
 
-                    CalculateProximityInfluence(navMap, prox, ProxSplat);
-
-                    AddInfluence(friendlyProx, prox);
-                    AddInfluence(friendlyThreat, threat);
-                }
+                AddInfluence(friendlyProx, prox);
+                AddInfluence(friendlyThreat, threat);
             }
 
             // DebugIMAP(friendlyProx, 0.01f, 500);
@@ -132,13 +122,6 @@ namespace Overseer::Systems
             // printf("} \n");
         }
 
-        int ClampPosition(Pos pos, int2& clampedPos, int2& center)
-        {
-            clampedPos = clamp(pos.Val, INFLUENCE_CENTER, MAP_WIDTH - INFLUENCE_RADIUS);
-            center     = INFLUENCE_CENTER + (pos.Val - clampedPos);
-            return (clampedPos.y - INFLUENCE_RADIUS) * MAP_WIDTH + (clampedPos.x - INFLUENCE_RADIUS);
-        }
-
         void ClampAndSetBounds(Pos pos, CreepIMAP& creepIMAP)
         {
             int2 clampedPos = clamp(pos.Val, INFLUENCE_CENTER, MAP_WIDTH - INFLUENCE_RADIUS);
@@ -170,7 +153,7 @@ namespace Overseer::Systems
             {
                 for (int x = proxIMAP.Start.x; x < proxIMAP.End.x; ++x)
                 {
-                    int   tileCost               = navMap.Map[mapIndex];
+                    int tileCost                 = navMap.Map[mapIndex];
                     proxIMAP.Influence[infIndex] = tileCost == 255 ? 0 : proxSplat.Influence[infIndex];
                     // printf("{ MapIndex: %i, MyIndex: %i, Dist: %i, Inf: %f }, ", mapIndex, myIndex, distance, inf);
                     mapIndex++;
@@ -182,7 +165,9 @@ namespace Overseer::Systems
             // printf("} \n");
         }
 
-        void CalculateThreatInfluence()
+        void CalculateThreatInfluence(Common::NavMap      navMap,
+                                      CreepThreatIMAP&    threatIMAP,
+                                      Common::Pathcoster& pathcoster)
         {
             // Three types of threat exist -> Heal, Attack, RangedAttack
             // Each should have a different splat and sum them together
@@ -193,6 +178,38 @@ namespace Overseer::Systems
             // Attack threat should also depend on ability to move, with no move ability the radius can be 1
 
             // Is heal a threat? or just an indirect threat? SHould it be included in threat influence?
+
+            float attackThreat = attackPartCount * THREAT_ATTACK_MULT;
+            float rangedAttackThreat = rangedAttackPartCount * THREAT_RANGED_ATTACK_MULT;
+
+            int costs[INFLUENCE_SIZE];
+            pathcoster.GetCosts(costs);
+
+            int mapIndex = threatIMAP.MapStartIndex;
+            int infIndex = threatIMAP.InfStartIndex;
+
+
+            if (canMove)
+            {
+                for (int y = threatIMAP.Start.y; y < threatIMAP.End.y; ++y)
+                {
+                    for (int x = threatIMAP.Start.x; x < threatIMAP.End.x; ++x)
+                    {
+                        float threat =  CalculateInverse2PolyInfluence(attackThreat, costs[infIndex], 6.0f);
+                        threatIMAP.Influence[infIndex] = threat;// Potentially precalc values and just lookup? ie 1 = 1.0f, 2 = 0.75f etc
+                        mapIndex++;
+                        infIndex++;
+                    }
+                    mapIndex += threatIMAP.MapYIncrement;
+                    infIndex += threatIMAP.InfYIncrement;
+                }
+            }
+            else
+            {
+                // Zero out threat map and draw around creep range 1 the attack threat
+            }
+
+
         }
 
         void DebugIMAP(IMAP imap, float minVal, int maxCount)
