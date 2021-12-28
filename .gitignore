@@ -1,5 +1,6 @@
 dist/
 typescript/node_modules/
+typescript/build/
 wasm/build/
 *.ll
 
