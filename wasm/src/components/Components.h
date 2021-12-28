@@ -122,7 +122,7 @@ namespace Overseer::Components
                 }
             }
 
-            TicksPerMove = min((int)ceil((float)totalNonMove / (float)Move), 1);
+            TicksPerMove = Move == 0 ? -1 : min((int)ceil((float)totalNonMove / (float)Move), 1);
         }
     };
 

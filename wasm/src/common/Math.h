@@ -60,12 +60,14 @@ namespace Overseer::Common::Math
 
     inline static float CalculateInverse2PolyInfluence(float maxValue, float distance, float maxDistance)
     {
-        return maxValue - maxValue * linalg::pow((min(distance, maxDistance) / maxDistance), 2);
+        float val = min(distance, maxDistance) / maxDistance;
+        return maxValue - maxValue * (val * val);
     }
 
     inline static float CalculateInverse4PolyInfluence(float maxValue, float distance, float maxDistance)
     {
-        return maxValue - maxValue * linalg::pow((min(distance, maxDistance) / maxDistance), 4);
+        float val = min(distance, maxDistance) / maxDistance;
+        return maxValue - maxValue * (val * val * val * val);
     }
 } // namespace Overseer::Common::Math
 

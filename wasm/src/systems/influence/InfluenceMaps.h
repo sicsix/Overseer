@@ -30,11 +30,11 @@ namespace Overseer::Systems
     {
     };
 
-    struct ProxSplatMap
+    struct ProxPrecomputes
     {
-        float Influence[INFLUENCE_SIZE];
+        static float Influence[INFLUENCE_SIZE];
 
-        ProxSplatMap()
+        ProxPrecomputes()
         {
             int infIndex = 0;
 
@@ -42,12 +42,26 @@ namespace Overseer::Systems
             {
                 for (int x = 0; x < INFLUENCE_WIDTH; ++x)
                 {
-                    int distance = DistanceChebyshev(INFLUENCE_CENTER, int2(x, y));
+                    int distance        = DistanceChebyshev(INFLUENCE_CENTER, int2(x, y));
                     Influence[infIndex] = CalculateInverse2PolyInfluence(0.5f, distance, INFLUENCE_RADIUS);
                     infIndex++;
                 }
             }
         }
+    };
+
+    constexpr static float CalculateAttackLookupValue(int distance)
+    {
+        float val = min(distance, INFLUENCE_RADIUS) / INFLUENCE_RADIUS;
+        return 1.0f - 1.0f * (val * val);
+    }
+
+    struct ThreatPrecomputes
+    {
+        constexpr static float AttackLookup[8] = { CalculateAttackLookupValue(0), CalculateAttackLookupValue(1),
+                                                   CalculateAttackLookupValue(2), CalculateAttackLookupValue(3),
+                                                   CalculateAttackLookupValue(4), CalculateAttackLookupValue(5),
+                                                   CalculateAttackLookupValue(6), CalculateAttackLookupValue(7) };
     };
 } // namespace Overseer::Systems
 

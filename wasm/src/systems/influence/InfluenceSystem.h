@@ -15,9 +15,6 @@ namespace Overseer::Systems
 {
     class InfluenceSystem : SystemBase
     {
-      private:
-        ProxSplatMap ProxSplat;
-
       public:
         void Initialise(entt::registry& registry) override
         {
@@ -26,9 +23,8 @@ namespace Overseer::Systems
             registry.set<EnemyProxIMAP>();
             registry.set<EnemyThreatIMAP>();
 
-            for (int i = 0; i < INFLUENCE_SIZE; ++i)
-            {
-            }
+            ProxPrecomputes();
+            ThreatPrecomputes();
         }
 
         void Update(entt::registry& registry) override
@@ -65,8 +61,8 @@ namespace Overseer::Systems
 
                 // printf("Entity: %i    Pos: { %i, %i }\n", entity, pos.Val.x, pos.Val.y);
 
-                CalculateProximityInfluence(navMap, proxIMAP, ProxSplat);
-                CalculateThreatInfluence(navMap, threatIMAP, ThreatSplat, pathcoster, threat);
+                CalculateProximityInfluence(navMap, proxIMAP);
+                CalculateThreatInfluence(navMap, threatIMAP, pathcoster, threat);
 
                 AddInfluence(friendlyProx, proxIMAP);
                 AddInfluence(friendlyThreat, threatIMAP);
@@ -141,7 +137,7 @@ namespace Overseer::Systems
             creepIMAP.InfStartIndex = creepIMAP.Start.y * INFLUENCE_WIDTH + creepIMAP.Start.x;
         }
 
-        void CalculateProximityInfluence(Common::NavMap navMap, CreepProxIMAP& proxIMAP, ProxSplatMap proxSplat)
+        void CalculateProximityInfluence(Common::NavMap navMap, CreepProxIMAP& proxIMAP)
         {
             // printf(
             //     "Start: { %i, %i }    End: { %i, %i }    Width: %i    WidthDiff: %i    MapIndex: %i    MyIndex:
@@ -156,7 +152,7 @@ namespace Overseer::Systems
                 for (int x = proxIMAP.Start.x; x < proxIMAP.End.x; ++x)
                 {
                     int tileCost                 = navMap.Map[mapIndex];
-                    proxIMAP.Influence[infIndex] = tileCost == 255 ? 0 : proxSplat.Influence[infIndex];
+                    proxIMAP.Influence[infIndex] = tileCost == 255 ? 0 : ProxPrecomputes::Influence[infIndex];
                     // printf("{ MapIndex: %i, MyIndex: %i, Dist: %i, Inf: %f }, ", mapIndex, myIndex, distance, inf);
                     mapIndex++;
                     infIndex++;
@@ -169,7 +165,6 @@ namespace Overseer::Systems
 
         void CalculateThreatInfluence(Common::NavMap      navMap,
                                       CreepThreatIMAP&    threatIMAP,
-                                      ThreatSplatMap      threatSplat,
                                       Common::Pathcoster& pathcoster,
                                       Threat              threat)
         {
@@ -183,35 +178,31 @@ namespace Overseer::Systems
 
             // Is heal a threat? or just an indirect threat? SHould it be included in threat influence?
 
-            // float attackThreat = attackPartCount * THREAT_ATTACK_MULT;
-            // float rangedAttackThreat = rangedAttackPartCount * THREAT_RANGED_ATTACK_MULT;
-            // float healThreat?
-            //
-            // int costs[INFLUENCE_SIZE];
-            // pathcoster.GetCosts(costs);
-            //
-            // int mapIndex = threatIMAP.MapStartIndex;
-            // int infIndex = threatIMAP.InfStartIndex;
-            //
-            //
-            // if (canMove)
-            // {
-            //     for (int y = threatIMAP.Start.y; y < threatIMAP.End.y; ++y)
-            //     {
-            //         for (int x = threatIMAP.Start.x; x < threatIMAP.End.x; ++x)
-            //         {
-            //             float threat =  CalculateInverse2PolyInfluence(attackThreat, costs[infIndex],
-            //             INFLUENCE_RADIUS); threatIMAP.Influence[infIndex] = threat;// Potentially precalc values and
-            //             just lookup? ie 1 = 1.0f, 2 = 0.75f etc mapIndex++; infIndex++;
-            //         }
-            //         mapIndex += threatIMAP.MapYIncrement;
-            //         infIndex += threatIMAP.InfYIncrement;
-            //     }
-            // }
-            // else
-            // {
-            //     // Zero out threat map and draw around creep range 1 the attack threat
-            // }
+            int costs[INFLUENCE_SIZE];
+            pathcoster.GetCosts(costs);
+
+            int mapIndex = threatIMAP.MapStartIndex;
+            int infIndex = threatIMAP.InfStartIndex;
+
+            if (threat.TicksPerMove != -1)
+            {
+                for (int y = threatIMAP.Start.y; y < threatIMAP.End.y; ++y)
+                {
+                    for (int x = threatIMAP.Start.x; x < threatIMAP.End.x; ++x)
+                    {
+                        float inf = ThreatPrecomputes::AttackLookup[min(costs[infIndex], 7)] * threat.AttackDamage * 0.1f;
+                        threatIMAP.Influence[infIndex] = inf;
+                        mapIndex++;
+                        infIndex++;
+                    }
+                    mapIndex += threatIMAP.MapYIncrement;
+                    infIndex += threatIMAP.InfYIncrement;
+                }
+            }
+            else
+            {
+                // Zero out threat map and draw around creep range 1 the attack threat
+            }
         }
 
         void DebugIMAP(IMAP imap, float minVal, int maxCount)
