@@ -5,7 +5,7 @@
 #include "LineOfSight.h"
 #include "Math.h"
 
-namespace Overseer::Common
+namespace Overseer::Core
 {
     LineOfSight::LineOfSight(struct TerrainMap& terrainMap)
     {
@@ -224,4 +224,4 @@ namespace Overseer::Common
             }
         }
     }
-} // namespace Overseer::Common
+} // namespace Overseer::Core

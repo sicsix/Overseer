@@ -2,11 +2,11 @@
 #include "Signals.h"
 #include "commands/CommandHandler.h"
 #include "imports/ImportHandler.h"
-#include "common/Structures.h"
+#include "core/Structures.h"
 #include "systems/map/MapSystem.h"
 #include "systems/movement/MovementSystem.h"
 #include "systems/influence/InfluenceSystem.h"
-#include "common/Pathfinder.h"
+#include "core/Pathfinder.h"
 
 namespace Overseer
 {
@@ -43,7 +43,7 @@ namespace Overseer
         auto goal  = int2(90, 90);
 
         printf("[WASM] Pathfinding debug\n");
-        auto pathFinder = Registry.ctx<Common::Pathfinder>();
+        auto pathFinder = Registry.ctx<Core::Pathfinder>();
         auto path       = Components::Path();
 
         for (int i = 0; i < 14; ++i)

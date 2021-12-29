@@ -2,10 +2,10 @@
 // Created by Tim on 28/12/2021.
 //
 
-#ifndef OVERSEER_WASM_SRC_COMMON_PRIORITYQUEUE_H_
-#define OVERSEER_WASM_SRC_COMMON_PRIORITYQUEUE_H_
+#ifndef OVERSEER_WASM_SRC_CORE_PRIORITYQUEUE_H_
+#define OVERSEER_WASM_SRC_CORE_PRIORITYQUEUE_H_
 #include <queue>
-namespace Overseer::Common
+namespace Overseer::Core
 {
     struct Node
     {
@@ -66,5 +66,5 @@ namespace Overseer::Common
             this->c.clear();
         }
     };
-} // namespace Overseer::Common
-#endif // OVERSEER_WASM_SRC_COMMON_PRIORITYQUEUE_H_
+} // namespace Overseer::Core
+#endif // OVERSEER_WASM_SRC_CORE_PRIORITYQUEUE_H_

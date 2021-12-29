@@ -2,13 +2,13 @@
 // Created by Tim on 29/12/2021.
 //
 
-#ifndef OVERSEER_WASM_SRC_COMMON_LINEOFSIGHT_H_
-#define OVERSEER_WASM_SRC_COMMON_LINEOFSIGHT_H_
+#ifndef OVERSEER_WASM_SRC_CORE_LINEOFSIGHT_H_
+#define OVERSEER_WASM_SRC_CORE_LINEOFSIGHT_H_
 #include "Includes.h"
 #include "Structures.h"
 #include "components/Components.h"
 
-namespace Overseer::Common
+namespace Overseer::Core
 {
     class LineOfSight
     {
@@ -36,6 +36,6 @@ namespace Overseer::Common
 
         static int2 Slope(Tile& tile);
     };
-} // namespace Overseer::Common
+} // namespace Overseer::Core
 
-#endif // OVERSEER_WASM_SRC_COMMON_LINEOFSIGHT_H_
+#endif // OVERSEER_WASM_SRC_CORE_LINEOFSIGHT_H_

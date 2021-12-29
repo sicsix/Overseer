@@ -6,10 +6,10 @@
 #define OVERSEER_WASM_SRC_SYSTEMS_INFLUENCE_INFLUENCESYSTEM_H_
 #include "systems/SystemBase.h"
 #include "components/Components.h"
-#include "InfluenceMaps.h"
+#include "core/InfluenceMaps.h"
 #include "commands/CommandHandler.h"
-#include "common/Math.h"
-#include "common/Pathcoster.h"
+#include "core/Math.h"
+#include "core/Pathcoster.h"
 #include "ThreatInfluence.h"
 #include "ProximityInfluence.h"
 
@@ -20,23 +20,23 @@ namespace Overseer::Systems::Influence
       public:
         void Initialise(entt::registry& registry) override
         {
-            registry.set<FriendlyProxIMAP>();
-            registry.set<FriendlyThreatIMAP>();
-            registry.set<EnemyProxIMAP>();
-            registry.set<EnemyThreatIMAP>();
+            registry.set<Core::FriendlyProxIMAP>();
+            registry.set<Core::FriendlyThreatIMAP>();
+            registry.set<Core::EnemyProxIMAP>();
+            registry.set<Core::EnemyThreatIMAP>();
 
-            InfluencePrecomputes();
+            Core::InfluencePrecomputes();
         }
 
         void Update(entt::registry& registry) override
         {
-            auto navMap         = registry.ctx<Common::NavMap>();
-            auto friendlyProx   = registry.ctx<FriendlyProxIMAP>();
-            auto friendlyThreat = registry.ctx<FriendlyThreatIMAP>();
-            auto enemyProx      = registry.ctx<EnemyProxIMAP>();
-            auto enemyThreat    = registry.ctx<EnemyThreatIMAP>();
-            auto pathcoster     = registry.ctx<Common::Pathcoster>();
-            auto lineOfSight    = registry.ctx<Common::LineOfSight>();
+            auto navMap         = registry.ctx<Core::NavMap>();
+            auto friendlyProx   = registry.ctx<Core::FriendlyProxIMAP>();
+            auto friendlyThreat = registry.ctx<Core::FriendlyThreatIMAP>();
+            auto enemyProx      = registry.ctx<Core::EnemyProxIMAP>();
+            auto enemyThreat    = registry.ctx<Core::EnemyThreatIMAP>();
+            auto pathcoster     = registry.ctx<Core::Pathcoster>();
+            auto lineOfSight    = registry.ctx<Core::LineOfSight>();
 
             ClearMap(friendlyProx);
             ClearMap(friendlyThreat);
@@ -93,16 +93,16 @@ namespace Overseer::Systems::Influence
                 AddInfluence(enemyThreat, threatIMAP);
             }
 
-            DebugIMAP(friendlyThreat, 0.01f, 500);
+            DebugIMAP(friendlyProx, 0.01f, 750);
         }
 
       private:
-        void ClearMap(IMAP imap)
+        void ClearMap(Core::IMAP imap)
         {
             memset(imap.Influence, 0, sizeof(float) * MAP_SIZE);
         }
 
-        void SubtractInfluence(IMAP imap, CreepIMAP creepIMAP)
+        void SubtractInfluence(Core::IMAP imap, CreepIMAP creepIMAP)
         {
             int mapIndex = creepIMAP.MapStartIndex;
             int infIndex = creepIMAP.InfStartIndex;
@@ -124,7 +124,7 @@ namespace Overseer::Systems::Influence
             }
         }
 
-        void AddInfluence(IMAP imap, CreepIMAP creepIMAP)
+        void AddInfluence(Core::IMAP imap, CreepIMAP creepIMAP)
         {
             int mapIndex = creepIMAP.MapStartIndex;
             int infIndex = creepIMAP.InfStartIndex;
@@ -186,7 +186,7 @@ namespace Overseer::Systems::Influence
 
 
 
-        void DebugIMAP(IMAP imap, float minVal, int maxCount)
+        void DebugIMAP(Core::IMAP imap, float minVal, int maxCount)
         {
             int count = 0;
             for (int i = 0; i < MAP_SIZE; ++i)

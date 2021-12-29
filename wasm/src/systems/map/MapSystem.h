@@ -7,10 +7,10 @@
 #include "systems/SystemBase.h"
 #include "components/Components.h"
 #include "Signals.h"
-#include "common/Navigation.h"
-#include "common/Pathfinder.h"
-#include "common/Pathcoster.h"
-#include "common/LineOfSight.h"
+#include "core/Navigation.h"
+#include "core/Pathfinder.h"
+#include "core/Pathcoster.h"
+#include "core/LineOfSight.h"
 
 namespace Overseer::Systems
 {
@@ -31,24 +31,24 @@ namespace Overseer::Systems
         {
             printf("[WASM] Building navigation map...\n");
 
-            auto terrainMap = registry.ctx<Common::TerrainMap>();
+            auto terrainMap = registry.ctx<Core::TerrainMap>();
 
             int* navCosts = new int[MAP_SIZE];
 
             for (int i = 0; i < MAP_SIZE; ++i)
             {
-                navCosts[i] = Common::Navigation::TerrainCost[terrainMap.Map[i]];
+                navCosts[i] = Core::Navigation::TerrainCost[terrainMap.Map[i]];
             }
 
-            auto navMap     = Common::NavMap(navCosts);
-            auto pathfinder = Common::Pathfinder(navMap);
-            auto pathcoster = Common::Pathcoster(navMap);
-            auto lineOfSight = Common::LineOfSight(terrainMap);
+            auto navMap     = Core::NavMap(navCosts);
+            auto pathfinder = Core::Pathfinder(navMap);
+            auto pathcoster = Core::Pathcoster(navMap);
+            auto lineOfSight = Core::LineOfSight(terrainMap);
 
-            registry.set<Common::NavMap>(navMap);
-            registry.set<Common::Pathfinder>(pathfinder);
-            registry.set<Common::Pathcoster>(pathcoster);
-            registry.set<Common::LineOfSight>(lineOfSight);
+            registry.set<Core::NavMap>(navMap);
+            registry.set<Core::Pathfinder>(pathfinder);
+            registry.set<Core::Pathcoster>(pathcoster);
+            registry.set<Core::LineOfSight>(lineOfSight);
         }
     };
 } // namespace Overseer::Systems

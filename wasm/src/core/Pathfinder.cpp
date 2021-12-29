@@ -6,7 +6,7 @@
 #include "PriorityQueue.h"
 #include "Math.h"
 
-namespace Overseer::Common
+namespace Overseer::Core
 {
     struct Pathfinder::FinderNode
     {
@@ -27,7 +27,7 @@ namespace Overseer::Common
         NavigationMap = navMap;
         BlankNodeSet  = new FinderNode[MAP_SIZE + 1];
         NodeSet       = new FinderNode[MAP_SIZE + 1];
-        PriorityQueue = Overseer::Common::PriorityQueue<int, Node>();
+        PriorityQueue = Overseer::Core::PriorityQueue<int, Node>();
     }
 
     bool Pathfinder::FindPath(int2& start, int2& goal, Path& path)
@@ -42,7 +42,7 @@ namespace Overseer::Common
                               int2&                             start,
                               int2&                             goal,
                               Path&                             path,
-                              Common::PriorityQueue<int, Node>& openSet,
+                              Core::PriorityQueue<int, Node>& openSet,
                               FinderNode*                       nodeSet)
     {
         path.Clear();
@@ -131,7 +131,7 @@ namespace Overseer::Common
                                        int2&                             goal,
                                        int                               index,
                                        int                               parentCost,
-                                       Common::PriorityQueue<int, Node>& openSet,
+                                       Core::PriorityQueue<int, Node>& openSet,
                                        Pathfinder::FinderNode*           nodeSet,
                                        int4x2                            offsets)
     {
@@ -210,4 +210,4 @@ namespace Overseer::Common
         if (isTileValid.w)
             openSet.Push(expectedCosts.w, Node(currentIndexes.w, costSoFar.w));
     }
-} // namespace Overseer::Common
+} // namespace Overseer::Core

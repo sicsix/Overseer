@@ -2,14 +2,14 @@
 // Created by Tim on 28/12/2021.
 //
 
-#ifndef OVERSEER_WASM_SRC_COMMON_PATHCOSTER_H_
-#define OVERSEER_WASM_SRC_COMMON_PATHCOSTER_H_
+#ifndef OVERSEER_WASM_SRC_CORE_PATHCOSTER_H_
+#define OVERSEER_WASM_SRC_CORE_PATHCOSTER_H_
 #include "Includes.h"
 #include "Structures.h"
 #include "components/Components.h"
 #include "PriorityQueue.h"
 
-namespace Overseer::Common
+namespace Overseer::Core
 {
     class Pathcoster
     {
@@ -27,7 +27,7 @@ namespace Overseer::Common
                                    CreepThreatIMAP&                  threatIMAP,
                                    int                               costMultiplier,
                                    int*                              costs,
-                                   Common::PriorityQueue<int, Node>& openSet);
+                                    Core::PriorityQueue<int, Node>& openSet);
 
         static void ProcessDirections(NavMap&                           navMap,
                                       int2&                             currWorldPos,
@@ -37,9 +37,9 @@ namespace Overseer::Common
                                       int                               parentCost,
                                       int                               costMultiplier,
                                       int*                              costs,
-                                      Common::PriorityQueue<int, Node>& openSet,
+                                      Core::PriorityQueue<int, Node>& openSet,
                                       int4x2                            offsets);
     };
-} // namespace Overseer::Common
+} // namespace Overseer::Core
 
-#endif // OVERSEER_WASM_SRC_COMMON_PATHCOSTER_H_
+#endif // OVERSEER_WASM_SRC_CORE_PATHCOSTER_H_

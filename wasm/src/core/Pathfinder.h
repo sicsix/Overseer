@@ -2,14 +2,14 @@
 // Created by Tim on 26/12/2021.
 //
 
-#ifndef OVERSEER_WASM_SRC_COMMON_PATHFINDER_H_
-#define OVERSEER_WASM_SRC_COMMON_PATHFINDER_H_
+#ifndef OVERSEER_WASM_SRC_CORE_PATHFINDER_H_
+#define OVERSEER_WASM_SRC_CORE_PATHFINDER_H_
 #include "Includes.h"
 #include "Structures.h"
 #include "components/Components.h"
 #include "PriorityQueue.h"
 
-namespace Overseer::Common
+namespace Overseer::Core
 {
     class Pathfinder
     {
@@ -31,7 +31,7 @@ namespace Overseer::Common
                              int2&                             start,
                              int2&                             goal,
                              Path&                             path,
-                             Common::PriorityQueue<int, Node>& openSet,
+                             Core::PriorityQueue<int, Node>& openSet,
                              FinderNode*                       nodeSet);
 
         static void ProcessDirections(NavMap&                                     navMap,
@@ -39,10 +39,10 @@ namespace Overseer::Common
                                       int2&                                       goal,
                                       int                                         index,
                                       int                                         parentCost,
-                                      Overseer::Common::PriorityQueue<int, Node>& openSet,
+                                      Overseer::Core::PriorityQueue<int, Node>& openSet,
                                       FinderNode*                                 nodeSet,
                                       int4x2                                      offsets);
     };
-} // namespace Overseer::Common
+} // namespace Overseer::Core
 
-#endif // OVERSEER_WASM_SRC_COMMON_PATHFINDER_H_
+#endif // OVERSEER_WASM_SRC_CORE_PATHFINDER_H_

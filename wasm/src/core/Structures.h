@@ -2,11 +2,11 @@
 // Created by Tim on 26/12/2021.
 //
 
-#ifndef OVERSEER_WASM_SRC_COMMON_STRUCTURES_H_
-#define OVERSEER_WASM_SRC_COMMON_STRUCTURES_H_
+#ifndef OVERSEER_WASM_SRC_CORE_STRUCTURES_H_
+#define OVERSEER_WASM_SRC_CORE_STRUCTURES_H_
 #include "Includes.h"
 
-namespace Overseer::Common
+namespace Overseer::Core
 {
 	struct TerrainMap
 	{
@@ -36,4 +36,4 @@ namespace Overseer::Common
 
 }
 
-#endif //OVERSEER_WASM_SRC_COMMON_STRUCTURES_H_
+#endif // OVERSEER_WASM_SRC_CORE_STRUCTURES_H_

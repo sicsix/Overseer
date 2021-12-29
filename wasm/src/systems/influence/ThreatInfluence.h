@@ -5,13 +5,13 @@
 #ifndef OVERSEER_WASM_SRC_SYSTEMS_INFLUENCE_THREATINFLUENCE_H_
 #define OVERSEER_WASM_SRC_SYSTEMS_INFLUENCE_THREATINFLUENCE_H_
 #include "components/Components.h"
-#include "common/Pathcoster.h"
-#include "common/LineOfSight.h"
+#include "core/Pathcoster.h"
+#include "core/LineOfSight.h"
 
 namespace Overseer::Systems::Influence
 {
     static void CalculateThreatInfluence(CreepThreatIMAP&     threatIMAP,
-                                         Common::LineOfSight& lineOfSight,
+                                         Core::LineOfSight& lineOfSight,
                                          Threat               threat,
                                          int*                 costs)
     {
@@ -38,7 +38,7 @@ namespace Overseer::Systems::Influence
                 for (int x = threatIMAP.InfStart.x; x < threatIMAP.InfEnd.x; ++x)
                 {
                     int   tileCost                 = min(costs[infIndex], 7);
-                    float distBase                 = InfluencePrecomputes::LinearLookup[tileCost];
+                    float distBase                 = Core::CalculateLinearLookup(tileCost);
                     float inf                      = distBase * threat.AttackDamage * INFLUENCE_ATTACK_THREAT_MULT;
                     threatIMAP.Influence[infIndex] = inf;
                     // printf("{ MapIndex: %i, InfIndex: %i, Cost: %i, DistBase: %f, Inf: %f }, ",
@@ -75,7 +75,7 @@ namespace Overseer::Systems::Influence
                 for (int x = threatIMAP.InfStart.x; x < threatIMAP.InfEnd.x; ++x)
                 {
                     int   inLos      = costs[infIndex];
-                    float threatBase = inLos ? InfluencePrecomputes::RangedAttack4Falloff[infIndex] : 0;
+                    float threatBase = inLos ? Core::InfluencePrecomputes::RangedAttack4Falloff[infIndex] : 0;
                     float inf        = threatBase * threat.RangedAttackDamage * INFLUENCE_RANGED_ATTACK_THREAT_MULT;
                     threatIMAP.Influence[infIndex] += inf;
                     // if (inf > 0)
@@ -109,7 +109,7 @@ namespace Overseer::Systems::Influence
                 for (int x = threatIMAP.InfStart.x; x < threatIMAP.InfEnd.x; ++x)
                 {
                     int   inLos      = costs[infIndex];
-                    float threatBase = inLos ? InfluencePrecomputes::RangedAttack4Falloff[infIndex] : 0;
+                    float threatBase = inLos ? Core::InfluencePrecomputes::RangedAttack4Falloff[infIndex] : 0;
                     float inf        = threatBase * threat.RangedHealRate * INFLUENCE_RANGED_HEAL_THREAT_MULT;
                     threatIMAP.Influence[infIndex] += inf;
                     // if (inf > 0)

@@ -2,11 +2,11 @@
 // Created by Tim on 26/12/2021.
 //
 
-#ifndef OVERSEER_WASM_SRC_COMMON_MATH_H_
-#define OVERSEER_WASM_SRC_COMMON_MATH_H_
+#ifndef OVERSEER_WASM_SRC_CORE_MATH_H_
+#define OVERSEER_WASM_SRC_CORE_MATH_H_
 #include "Includes.h"
 
-namespace Overseer::Common::Math
+namespace Overseer::Core::Math
 {
     static constexpr int4x2 CardinalOffsetsSIMD = int4x2(int4(0, 1, 0, -1), int4(1, 0, -1, 0));
     static constexpr int4x2 DiagonalOffsetsSIMD = int4x2(int4(1, 1, -1, -1), int4(1, -1, -1, 1));
@@ -85,8 +85,8 @@ namespace Overseer::Common::Math
         float val = min(distance, maxDistance) / maxDistance;
         return maxValue - maxValue * (val * val * val * val);
     }
-} // namespace Overseer::Common::Math
+} // namespace Overseer::Core::Math
 
-using namespace Overseer::Common::Math;
+using namespace Overseer::Core::Math;
 
-#endif // OVERSEER_WASM_SRC_COMMON_MATH_H_
+#endif // OVERSEER_WASM_SRC_CORE_MATH_H_

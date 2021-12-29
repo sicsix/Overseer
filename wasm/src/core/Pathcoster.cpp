@@ -6,12 +6,12 @@
 #include "PriorityQueue.h"
 #include "Math.h"
 
-namespace Overseer::Common
+namespace Overseer::Core
 {
     Pathcoster::Pathcoster(NavMap& navMap)
     {
         NavigationMap = navMap;
-        PriorityQueue = Overseer::Common::PriorityQueue<int, Node>();
+        PriorityQueue = Overseer::Core::PriorityQueue<int, Node>();
     }
 
     void Pathcoster::GetPathingCosts(CreepThreatIMAP& threatIMAP, int costMultiplier, int* costs)
@@ -25,7 +25,7 @@ namespace Overseer::Common
                                      CreepThreatIMAP&                  threatIMAP,
                                      int                               costMultiplier,
                                      int*                              costs,
-                                     Common::PriorityQueue<int, Node>& openSet)
+                                     Core::PriorityQueue<int, Node>& openSet)
     {
         for (int i = 0; i <= INFLUENCE_SIZE; ++i) // <= as we the size is inf size + 1
         {
@@ -151,7 +151,7 @@ namespace Overseer::Common
                                        int                               parentCost,
                                        int                               costMultiplier,
                                        int*                              costs,
-                                       Common::PriorityQueue<int, Node>& openSet,
+                                       Core::PriorityQueue<int, Node>& openSet,
                                        int4x2                            offsets)
     {
         int4x2 currentWorldPositions = int4x2(int4(currWorldPos.x), int4(currWorldPos.y)) + offsets;
@@ -235,4 +235,4 @@ namespace Overseer::Common
         if (isTileValid.w)
             openSet.Push(costSoFar.w, Node(currentWorldIndexes.w, costSoFar.w));
     }
-} // namespace Overseer::Common
+} // namespace Overseer::Core

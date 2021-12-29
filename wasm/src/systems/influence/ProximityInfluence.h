@@ -4,11 +4,11 @@
 
 #ifndef OVERSEER_WASM_SRC_SYSTEMS_INFLUENCE_PROXIMITYINFLUENCE_H_
 #define OVERSEER_WASM_SRC_SYSTEMS_INFLUENCE_PROXIMITYINFLUENCE_H_
-#include "common/Structures.h"
+#include "core/Structures.h"
 #include "components/Components.h"
-#include "common/Math.h"
-#include "common/Pathcoster.h"
-#include "common/LineOfSight.h"
+#include "core/Math.h"
+#include "core/Pathcoster.h"
+#include "core/LineOfSight.h"
 
 namespace Overseer::Systems::Influence
 {
@@ -38,7 +38,7 @@ namespace Overseer::Systems::Influence
             for (int x = proxIMAP.InfStart.x; x < proxIMAP.InfEnd.x; ++x)
             {
                 int   tileCost               = min(costs[infIndex], 7);
-                float inf                    = InfluencePrecomputes::LinearLookup[tileCost];
+                float inf                    = Core::CalculateLinearLookup(tileCost);
                 proxIMAP.Influence[infIndex] = tileCost == INT_MAXVALUE ? 0 : inf;
                 // printf("{ MapIndex: %i, MyIndex: %i, Inf: %f }, ", mapIndex, infIndex, inf);
                 mapIndex++;

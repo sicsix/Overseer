@@ -1,5 +1,5 @@
 #include "ImportHandler.h"
-#include "common/Structures.h"
+#include "core/Structures.h"
 #include "components/Components.h"
 #include "Signals.h"
 
@@ -62,9 +62,9 @@ namespace Overseer::Imports
         memcpy(newTerrain, incTerrain, sizeof(int) * size);
         currIndex += size;
 
-        auto terrainMap = Common::TerrainMap(newTerrain);
+        auto terrainMap = Core::TerrainMap(newTerrain);
 
-        registry.set<Common::TerrainMap>(terrainMap);
+        registry.set<Core::TerrainMap>(terrainMap);
 
         Signals::TerrainMapImported.publish(registry);
     }
