@@ -28,6 +28,7 @@ constexpr int2 INFLUENCE_CENTER        = int2(INFLUENCE_RADIUS, INFLUENCE_RADIUS
 
 constexpr float INFLUENCE_ATTACK_THREAT_MULT = 0.005f;
 constexpr float INFLUENCE_RANGED_ATTACK_THREAT_MULT = 0.005f;
+constexpr float INFLUENCE_RANGED_HEAL_THREAT_MULT = 0.0025f;
 
 enum struct Direction
 {

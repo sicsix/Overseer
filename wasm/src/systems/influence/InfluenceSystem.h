@@ -85,7 +85,7 @@ namespace Overseer::Systems
                 AddInfluence(enemyThreat, threatIMAP);
             }
 
-            // DebugIMAP(enemyProx, 0.01f, 500);
+            DebugIMAP(friendlyThreat, 0.01f, 500);
         }
 
       private:
@@ -304,7 +304,35 @@ namespace Overseer::Systems
 
             if (threat.RangedHealRate > 0)
             {
-                // TODO this
+                int mapIndex = threatIMAP.MapStartIndex;
+                int infIndex = threatIMAP.InfStartIndex;
+
+                // TODO handle non moving creeps
+
+                // printf("CalculateRangedHealThreatInfluence: { ");
+                for (int y = threatIMAP.InfStart.y; y < threatIMAP.InfEnd.y; ++y)
+                {
+                    for (int x = threatIMAP.InfStart.x; x < threatIMAP.InfEnd.x; ++x)
+                    {
+                        int   inLos      = array[infIndex];
+                        float threatBase = inLos ? ThreatPrecomputes::RangedAttack4Falloff[infIndex] : 0;
+                        float inf        = threatBase * threat.RangedHealRate * INFLUENCE_RANGED_HEAL_THREAT_MULT;
+                        threatIMAP.Influence[infIndex] += inf;
+                        // if (inf > 0)
+                        // {
+                        //     // printf("{ MapIndex: %i, InfIndex: %i, InLos: %i, ThreatBase: %f, Inf: %f }, ",
+                        //            mapIndex,
+                        //            infIndex,
+                        //            inLos,
+                        //            threatBase,
+                        //            inf);
+                        // }
+                        mapIndex++;
+                        infIndex++;
+                    }
+                    mapIndex += threatIMAP.MapYIncrement;
+                    infIndex += threatIMAP.InfYIncrement;
+                }
             }
         }
 

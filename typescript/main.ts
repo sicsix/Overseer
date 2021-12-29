@@ -1,8 +1,9 @@
 import { arenaInfo } from "game";
-import { getCpuTime } from "game/utils";
+import { getCpuTime, getObjectsByPrototype } from "game/utils";
 import { ModuleManager } from "./moduleManager";
 import { CreepExporter } from "./exporters/creepExporter";
 import { TerrainMapExporter } from "./exporters/terrainMapExporter";
+import { Creep, StructureTower } from "game/prototypes";
 
 const moduleManager: ModuleManager = new ModuleManager();
 const terrainMapExporter: TerrainMapExporter = new TerrainMapExporter(moduleManager.ExportBuffer);
@@ -22,6 +23,29 @@ export function loop(): void
 
     moduleManager.Execute();
 
+    // let creeps = getObjectsByPrototype(Creep);
+    // let target: Creep;
+    // for (let i = 0; i < creeps.length; i++)
+    // {
+    //     target = creeps[i];
+    //     if (!target.my)
+    //         break;
+    // }
+    //
+    // let towers = getObjectsByPrototype(StructureTower);
+    // for (let i = 0; i < towers.length; i++)
+    // {
+    //     let tower = towers[i];
+    //     if (!tower.my)
+    //         continue;
+    //
+    //     // @ts-ignore
+    //     console.log(tower);
+    //     // @ts-ignore
+    //     console.log(target);
+    //     // @ts-ignore
+    //     console.log(tower.attack(target));
+    // }
 
     console.log("__________________________________________");
     console.log(`[CPU MONITOR]  TIME: ${(getCpuTime() * NS_TO_MS).toFixed(3)}ms  USAGE: ${(getCpuTime() / timeLimit * 100).toFixed(2)}%`);
