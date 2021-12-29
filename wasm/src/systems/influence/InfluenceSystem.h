@@ -42,13 +42,12 @@ namespace Overseer::Systems
             ClearMap(enemyProx);
             ClearMap(enemyThreat);
 
-            // TODO narrow this down eventually to only cover creeps, and all of them
             auto friendlyCreeps = registry.view<My, Pos, CreepProxIMAP, CreepThreatIMAP, Threat>();
-            // int ranX        = 0;
+            // int  ranX           = 0;
             for (auto entity : friendlyCreeps)
             {
-                // if (ranX == 2)
-                //     break;
+                // if (entity != (entt::entity)6)
+                //     continue;
                 // ranX++;
 
                 auto [pos, proxIMAP, threatIMAP, threat] = friendlyCreeps.get(entity);
@@ -86,7 +85,7 @@ namespace Overseer::Systems
                 AddInfluence(enemyThreat, threatIMAP);
             }
 
-            DebugIMAP(friendlyProx, 0.01f, 500);
+            // DebugIMAP(enemyProx, 0.01f, 500);
         }
 
       private:
@@ -146,21 +145,19 @@ namespace Overseer::Systems
             int2 worldStartUnclamped = pos.Val - INFLUENCE_RADIUS;
             int2 worldEndUnclamped   = pos.Val + INFLUENCE_RADIUS + 1;
 
-            creepIMAP.WorldStart    = max(worldStartUnclamped, 0);
-            creepIMAP.WorldEnd      = min(worldEndUnclamped, MAP_WIDTH);
-            creepIMAP.WorldCenter   = pos.Val;
-            creepIMAP.MapStartIndex = PosToIndex(creepIMAP.WorldStart, MAP_WIDTH);
+            creepIMAP.WorldStart          = max(worldStartUnclamped, 0);
+            creepIMAP.WorldEnd            = min(worldEndUnclamped, MAP_WIDTH);
+            creepIMAP.WorldCenter         = pos.Val;
+            creepIMAP.MapStartIndex       = PosToIndex(creepIMAP.WorldStart, MAP_WIDTH);
 
             creepIMAP.InfStart      = max(creepIMAP.WorldStart - worldStartUnclamped, 0);
             creepIMAP.InfEnd        = INFLUENCE_WIDTH - (worldEndUnclamped - creepIMAP.WorldEnd);
             creepIMAP.InfStartIndex = PosToIndex(creepIMAP.InfStart, INFLUENCE_WIDTH);
 
             // printf(
-            //     "  InfStart: { %i, %i }    InfEnd: { %i, %i }    WorldStart: { %i, %i }    WorldEnd: { %i, %i }    WorldStartUnclamped: { %i, %i }    WorldEndUnclamped: { %i, %i }    MapStartIndex: %i    InfStartIndex: %i\n",
-            //     creepIMAP.InfStart.x,
-            //     creepIMAP.InfStart.y,
-            //     creepIMAP.InfEnd.x,
-            //     creepIMAP.InfEnd.y,
+            //     "  InfStart: { %i, %i }    InfEnd: { %i, %i }    WorldStart: { %i, %i }    WorldEnd: { %i, %i }
+            //     WorldStartUnclamped: { %i, %i }    WorldEndUnclamped: { %i, %i }    MapStartIndex: %i InfStartIndex:
+            //     %i\n", creepIMAP.InfStart.x, creepIMAP.InfStart.y, creepIMAP.InfEnd.x, creepIMAP.InfEnd.y,
             //     creepIMAP.WorldStart.x,
             //     creepIMAP.WorldStart.y,
             //     creepIMAP.WorldEnd.x,
@@ -289,7 +286,7 @@ namespace Overseer::Systems
                         threatIMAP.Influence[infIndex] += inf;
                         // if (inf > 0)
                         // {
-                        //     printf("{ MapIndex: %i, InfIndex: %i, InLos: %i, ThreatBase: %f, Inf: %f }, ",
+                        //     // printf("{ MapIndex: %i, InfIndex: %i, InLos: %i, ThreatBase: %f, Inf: %f }, ",
                         //            mapIndex,
                         //            infIndex,
                         //            inLos,
@@ -307,6 +304,7 @@ namespace Overseer::Systems
 
             if (threat.RangedHealRate > 0)
             {
+                // TODO this
             }
         }
 

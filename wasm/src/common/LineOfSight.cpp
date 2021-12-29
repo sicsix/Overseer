@@ -179,7 +179,7 @@ namespace Overseer::Common
 
                     if (IsSymmetric(row, tile) && IsFloor(terrain))
                     {
-                        auto infPos      = worldPos - threatIMAP.WorldStart;
+                        auto infPos      = worldPos - (threatIMAP.WorldCenter - INFLUENCE_RADIUS);
                         auto infIndex    = PosToIndex(infPos, INFLUENCE_WIDTH);
                         vision[infIndex] = 1;
                     }
