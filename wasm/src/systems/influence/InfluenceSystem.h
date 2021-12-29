@@ -10,6 +10,7 @@
 #include "commands/CommandHandler.h"
 #include "core/Math.h"
 #include "core/Pathcoster.h"
+#include "InfluencePrecomputes.h"
 #include "ThreatInfluence.h"
 #include "ProximityInfluence.h"
 
@@ -25,7 +26,7 @@ namespace Overseer::Systems::Influence
             registry.set<Core::EnemyProxIMAP>();
             registry.set<Core::EnemyThreatIMAP>();
 
-            Core::InfluencePrecomputes();
+            InfluencePrecomputes();
         }
 
         void Update(entt::registry& registry) override
@@ -181,10 +182,6 @@ namespace Overseer::Systems::Influence
             creepIMAP.MapYIncrement = MAP_WIDTH - width;
             creepIMAP.InfYIncrement = INFLUENCE_WIDTH - width;
         }
-
-
-
-
 
         void DebugIMAP(Core::IMAP imap, float minVal, int maxCount)
         {

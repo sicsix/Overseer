@@ -9,7 +9,7 @@ include_directories(lib/linalg lib/entt/src/entt src)
 
 set(TARGET_NAME module)
 
-add_executable(${TARGET_NAME} src/Main.cpp src/Main.h src/imports/ImportHandler.h src/imports/ImportHandler.cpp src/imports/ExportFlags.h src/commands/CommandHandler.h src/commands/Commands.h src/commands/Visual.h src/components/Components.h src/core/Structures.h src/systems/movement/MovementSystem.h src/Includes.h src/systems/influence/InfluenceSystem.h src/systems/SystemBase.h src/core/InfluenceMaps.h src/core/Pathfinder.cpp src/core/Pathfinder.h src/core/Math.h src/systems/map/MapSystem.h src/Signals.h src/core/Navigation.h src/core/PriorityQueue.h src/core/Pathcoster.cpp src/core/Pathcoster.h src/core/LineOfSight.cpp src/core/LineOfSight.h src/core/UtilityAI.cpp src/core/UtilityAI.h src/systems/influence/ThreatInfluence.h src/systems/influence/ProximityInfluence.h)
+add_executable(${TARGET_NAME} src/Main.cpp src/Main.h src/imports/ImportHandler.h src/imports/ImportHandler.cpp src/imports/ExportFlags.h src/commands/CommandHandler.h src/commands/Commands.h src/commands/Visual.h src/components/Components.h src/core/Structures.h src/systems/movement/MovementSystem.h src/Includes.h src/systems/influence/InfluenceSystem.h src/systems/SystemBase.h src/core/InfluenceMaps.h src/core/Pathfinder.cpp src/core/Pathfinder.h src/core/Math.h src/systems/map/MapSystem.h src/Signals.h src/core/Navigation.h src/core/PriorityQueue.h src/core/Pathcoster.cpp src/core/Pathcoster.h src/core/LineOfSight.cpp src/core/LineOfSight.h src/core/UtilityAI.cpp src/core/UtilityAI.h src/systems/influence/ThreatInfluence.h src/systems/influence/ProximityInfluence.h src/systems/influence/InfluencePrecomputes.h)
 
 # -s LLD_REPORT_UNDEFINED -Rpass=.* -O3 -msimd128 -msse4.1
 

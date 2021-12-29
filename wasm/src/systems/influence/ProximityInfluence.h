@@ -38,7 +38,7 @@ namespace Overseer::Systems::Influence
             for (int x = proxIMAP.InfStart.x; x < proxIMAP.InfEnd.x; ++x)
             {
                 int   tileCost               = min(costs[infIndex], 7);
-                float inf                    = Core::CalculateLinearLookup(tileCost);
+                float inf                    = CalculateLinearLookup(tileCost);
                 proxIMAP.Influence[infIndex] = tileCost == INT_MAXVALUE ? 0 : inf;
                 // printf("{ MapIndex: %i, MyIndex: %i, Inf: %f }, ", mapIndex, infIndex, inf);
                 mapIndex++;
