@@ -10,9 +10,9 @@
 
 namespace Overseer
 {
-    Systems::MapSystem       mapSystem;
-    Systems::MovementSystem  movementSystem;
-    Systems::InfluenceSystem influenceSystem;
+    Systems::MapSystem                  mapSystem;
+    Systems::MovementSystem             movementSystem;
+    Systems::Influence::InfluenceSystem influenceSystem;
 
     Main::Main(uint* importBuffer, double* commandBuffer): ImportBuffer(importBuffer)
     {

@@ -14,18 +14,18 @@ namespace Overseer::Common
         PriorityQueue = Overseer::Common::PriorityQueue<int, Node>();
     }
 
-    void Pathcoster::GetAttackCosts(CreepThreatIMAP& threatIMAP, int costMultiplier, int* costs)
+    void Pathcoster::GetPathingCosts(CreepThreatIMAP& threatIMAP, int costMultiplier, int* costs)
     {
-        GetAttackCosts(NavigationMap, threatIMAP, costMultiplier, costs, PriorityQueue);
+        GetPathingCosts(NavigationMap, threatIMAP, costMultiplier, costs, PriorityQueue);
         PriorityQueue.Clear();
     }
 
-    // TODO rename GetAttackCosts
-    void Pathcoster::GetAttackCosts(NavMap&                           navMap,
-                                    CreepThreatIMAP&                  threatIMAP,
-                                    int                               costMultiplier,
-                                    int*                              costs,
-                                    Common::PriorityQueue<int, Node>& openSet)
+    // TODO rename GetPathingCosts
+    void Pathcoster::GetPathingCosts(NavMap&                           navMap,
+                                     CreepThreatIMAP&                  threatIMAP,
+                                     int                               costMultiplier,
+                                     int*                              costs,
+                                     Common::PriorityQueue<int, Node>& openSet)
     {
         for (int i = 0; i <= INFLUENCE_SIZE; ++i) // <= as we the size is inf size + 1
         {
@@ -33,11 +33,9 @@ namespace Overseer::Common
         }
 
         // printf(
-        //     "WorldStart: { %i, %i }    WorldEnd: { %i, %i }    WorldCenter: { %i, %i }    MapStartIndex: %i    MapYIncrement: %i    InfStart: { %i, %i }    InfEnd: { %i, %i }    InfStartIndex: %i    InfYIncrement: %i\n",
-        //     threatIMAP.WorldStart.x,
-        //     threatIMAP.WorldStart.y,
-        //     threatIMAP.WorldEnd.x,
-        //     threatIMAP.WorldEnd.y,
+        //     "WorldStart: { %i, %i }    WorldEnd: { %i, %i }    WorldCenter: { %i, %i }    MapStartIndex: %i
+        //     MapYIncrement: %i    InfStart: { %i, %i }    InfEnd: { %i, %i }    InfStartIndex: %i    InfYIncrement:
+        //     %i\n", threatIMAP.WorldStart.x, threatIMAP.WorldStart.y, threatIMAP.WorldEnd.x, threatIMAP.WorldEnd.y,
         //     threatIMAP.WorldCenter.x,
         //     threatIMAP.WorldCenter.y,
         //     threatIMAP.MapStartIndex,
@@ -67,9 +65,8 @@ namespace Overseer::Common
 
         // printf("Offset: { %i, %i }\n", offset.x, offset.y);
         // printf(
-        //     "CenterIndex: %i    CenterStart: { %i, %i }    CenterEnd: { %i, %i }    InfStart: { %i, %i }    Width: %i    MapYIncrement: %i    InfYIncrement: %i    MapIndex: %i    InfIndex: %i\n",
-        //     centerIndex,
-        //     centerStart.x,
+        //     "CenterIndex: %i    CenterStart: { %i, %i }    CenterEnd: { %i, %i }    InfStart: { %i, %i }    Width: %i
+        //     MapYIncrement: %i    InfYIncrement: %i    MapIndex: %i    InfIndex: %i\n", centerIndex, centerStart.x,
         //     centerStart.y,
         //     centerEnd.x,
         //     centerEnd.y,
@@ -112,7 +109,8 @@ namespace Overseer::Common
             if (visitedNodeCost < current.CostSoFar)
                 continue;
 
-            // printf("    CurrWorldPos: { %i, %i}    CurrInfPos: { %i, %i }    WorldIndex: %i    InfIndex: %i    CostSoFar: %i    NodeCost: %i\n",
+            // printf("    CurrWorldPos: { %i, %i}    CurrInfPos: { %i, %i }    WorldIndex: %i    InfIndex: %i
+            // CostSoFar: %i    NodeCost: %i\n",
             //        currWorldPos.x,
             //        currWorldPos.y,
             //        currInfPos.x,

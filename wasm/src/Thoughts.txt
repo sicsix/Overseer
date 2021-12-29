@@ -1,0 +1,96 @@
+AI
+
+IMPLEMENTATION ORDER
+  INTEREST MAPS
+  UTILITY AI
+  INTEREST MAPS LINKING WITH UTILITY AI
+  SQUAD SYSTEM
+  SQUAD LEADER INFLUENCE MAPS -> may need a full map for each squad OR give the commander a larger and strong proximity radius?
+  BASIC COMMAND SYSTEM
+  BASIC CREEP AI
+  BASIC SL AI
+  BASIC COMMANDER AI
+
+Three levels of decision making:
+
+Overseer - Strategic Commander
+Responsible for:
+Analysing overall map state to create orders from
+Prioritising squad leader requests?
+Creating squads
+  Squad size
+  Squad makeup
+  Depending on goals?
+
+Operating towers
+  Heal
+  Attack
+
+Commanding squads
+  Reserve
+  Defend
+  Attack group
+  Attack building
+  Attack creep
+  Capture
+  Reinforce (join group)
+  Gather?
+  Potentially - behaviour - Careless, reckless, aggressive, careful, neutral?
+
+
+
+
+Squad Leader - Tactical Commander
+  Carrying out orders
+  Maintaining squad cohesiveness
+  Retreating
+  Calling for reinforcements
+  Calling priority targets for attack or healing
+  Requesting heals?
+  Passing leadership?
+
+  Maintains formation, use some sort of pathfinding proximity map of leader to show positions good to move to
+
+  Squad states ->   Engaged (if anyone in squad has done/received damage is past x tics)
+                    Fleeing (running at top speed in a general safe direction ie towards base or towards friendly group, or a targeted location, ignores stragglers)
+                    Withdrawing (steady withdrawal, maintaining cohesiveness)
+  Squad behaviour -> CAREFUL AWARE RECKLESS
+
+
+Also note:
+  Need to make sure we mark the location where prior creeps in the turn have opted to move to so it is blocked from being chosen by the next creep
+  Need to write interest map, need to add tower threat, need to add special leader proximity influence
+  Maybe start with squad system?
+
+Creeps - Invidiual AI
+  Following squad leader
+  Attacking, Ranged Attack, Heal etc as required
+  Positioning within squad leader radius to accomplish goals based on behaviour
+  Move to better location
+
+  Creep behaviour -> AVOID, ENGAGE, RECKLESS, inherits from squad unless overridden
+
+  Sample AI:
+  Movement
+    AER Manouver -> get closer to prioritised target or location, or closer to enemy, CAR determines how much personal safety matters
+    AER FollowSquadLeader -> if squad leader out of range or too far away, avoid enemies if near, manouver towards squad leaders position. if reckless do not avoid enemies
+    A Flee -> Too damaged/outnumbered, must be ordered from above, or invidual can choose if Careful, will flee towards base/squad leader/friendly groups
+    AE Withdrawal -> move to a safer place and wait for heals, avoid enemy contact, tries to find safe space behind friendlys, could be more likely to do if movement is threatened
+    AER Evade/RangedAttack/RangedHeal -> try and maintain buffer by keeping to lower threat zones, while still being in range to attack/heal, CAR determines how much risk taken to hit prioritised target
+
+  Attack/Heal
+    Attack -> prioritises targets that are marked, followed by target in lowest threat area ie more surrounded
+
+    RangedHeal -> Prioritise targets that are more surrounded and/or low health
+    Heal -> choose between rangeheal/heal, and which target to heal
+
+    RangedMassAttack -> Prioritise over RangedAttack if damage outcome better, only go against this rule if behaviour is reckless and priority is in range
+
+    Notes:  Attack + RangedHeal
+            Attack + RangedAttack
+            Attack + RangedMassAttack
+            RangedAttack + Heal
+            RangedMassAttack + Heal
+
+
+

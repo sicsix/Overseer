@@ -20,10 +20,10 @@ namespace Overseer::Common
       public:
         Pathcoster(NavMap& navMap);
 
-        void GetAttackCosts(CreepThreatIMAP& threatIMAP, int costMultiplier, int* costs);
+        void GetPathingCosts(CreepThreatIMAP& threatIMAP, int costMultiplier, int* costs);
 
       private:
-        static void GetAttackCosts(NavMap&                           navMap,
+        static void GetPathingCosts(NavMap&                           navMap,
                                    CreepThreatIMAP&                  threatIMAP,
                                    int                               costMultiplier,
                                    int*                              costs,
