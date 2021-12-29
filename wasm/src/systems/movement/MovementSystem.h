@@ -23,7 +23,7 @@ namespace Overseer::Systems
 
             for (auto entity : view)
             {
-                CommandHandler::Add(Move((double)entity, Direction::TOP_LEFT));
+                CommandHandler::Add(Move((double)entity, (double)Direction::BOTTOM_RIGHT));
             }
         }
     };

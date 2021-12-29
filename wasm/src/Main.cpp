@@ -89,7 +89,7 @@ namespace Overseer
         //			}
         //		}
 
-        printf("PRE END");
+        printf("[WASM] Finalising command buffer...\n");
         return Commands::CommandHandler::End();
     }
 } // namespace Overseer

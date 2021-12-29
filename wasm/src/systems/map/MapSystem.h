@@ -9,6 +9,8 @@
 #include "Signals.h"
 #include "common/Navigation.h"
 #include "common/Pathfinder.h"
+#include "common/Pathcoster.h"
+#include "common/LineOfSight.h"
 
 namespace Overseer::Systems
 {
@@ -40,9 +42,13 @@ namespace Overseer::Systems
 
             auto navMap     = Common::NavMap(navCosts);
             auto pathfinder = Common::Pathfinder(navMap);
+            auto pathcoster = Common::Pathcoster(navMap);
+            auto lineOfSight = Common::LineOfSight(terrainMap);
 
             registry.set<Common::NavMap>(navMap);
             registry.set<Common::Pathfinder>(pathfinder);
+            registry.set<Common::Pathcoster>(pathcoster);
+            registry.set<Common::LineOfSight>(lineOfSight);
         }
     };
 } // namespace Overseer::Systems

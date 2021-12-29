@@ -16,7 +16,7 @@ namespace Overseer::Common::Math
         return int2(index % width, index / width);
     }
 
-    inline static int PosToIndex(int2& pos, int width)
+    inline static int PosToIndex(int2 pos, int width)
     {
         return pos.y * width + pos.x;
     }
@@ -29,6 +29,11 @@ namespace Overseer::Common::Math
     inline static bool IsPosInbounds(int2& cell, int2 dimensions)
     {
         return ((cell < dimensions) & (cell >= int2(0))) == 1;
+    }
+
+    inline static bool IsPosInbounds(int2& cell, int2 start, int2 end)
+    {
+        return ((cell < end) & (cell >= start)) == 1;
     }
 
     inline static int4 IsPosInboundsSIMD(int4x2& positions, int2 dimensions)

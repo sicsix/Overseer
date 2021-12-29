@@ -50,18 +50,50 @@ namespace Overseer::Systems
         }
     };
 
-    constexpr static float CalculateAttackLookupValue(int distance)
+    constexpr static float CalculateAttackLookupValue(float distance)
     {
         float val = min(distance, INFLUENCE_RADIUS) / INFLUENCE_RADIUS;
-        return 1.0f - 1.0f * (val * val);
+        return 1.0f - val; // Linear
+        // return 1.0f - (val * val);             // 2 Poly
+        // return 1.0f - (val * val * val * val); // 4 Poly
     }
 
     struct ThreatPrecomputes
     {
-        constexpr static float AttackLookup[8] = { CalculateAttackLookupValue(0), CalculateAttackLookupValue(1),
-                                                   CalculateAttackLookupValue(2), CalculateAttackLookupValue(3),
-                                                   CalculateAttackLookupValue(4), CalculateAttackLookupValue(5),
-                                                   CalculateAttackLookupValue(6), CalculateAttackLookupValue(7) };
+        constexpr static float AttackLookup[8] = { CalculateAttackLookupValue(0.0f), CalculateAttackLookupValue(1.0f),
+                                                   CalculateAttackLookupValue(2.0f), CalculateAttackLookupValue(3.0f),
+                                                   CalculateAttackLookupValue(4.0f), CalculateAttackLookupValue(5.0f),
+                                                   CalculateAttackLookupValue(6.0f), CalculateAttackLookupValue(7.0f) };
+
+        inline static float RangedAttack4Falloff[INFLUENCE_SIZE];
+
+        inline static float RangedAttack3Static[INFLUENCE_SIZE];
+
+        ThreatPrecomputes()
+        {
+            int infIndex = 0;
+
+            for (int y = 0; y < INFLUENCE_WIDTH; ++y)
+            {
+                for (int x = 0; x < INFLUENCE_WIDTH; ++x)
+                {
+                    int distance                   = max(DistanceChebyshev(INFLUENCE_CENTER, int2(x, y)) - 4, 0);
+                    RangedAttack4Falloff[infIndex] = CalculateInverseLinearInfluence(1.0f, distance, INFLUENCE_RADIUS - 2);
+                    infIndex++;
+                }
+            }
+
+            infIndex = 0;
+            for (int y = 0; y < INFLUENCE_WIDTH; ++y)
+            {
+                for (int x = 0; x < INFLUENCE_WIDTH; ++x)
+                {
+                    int distance                   = DistanceChebyshev(INFLUENCE_CENTER, int2(x, y));
+                    RangedAttack3Static[infIndex] = distance > 3 ? 0 : 1;
+                    infIndex++;
+                }
+            }
+        }
     };
 } // namespace Overseer::Systems
 

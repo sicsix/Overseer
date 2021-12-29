@@ -31,6 +31,7 @@ namespace Overseer::Common
 
         static void ProcessDirections(NavMap&                           navMap,
                                       int2&                             currWorldPos,
+                                      int2&                             currInfPos,
                                       int2&                             worldStart,
                                       int2&                             worldEnd,
                                       int                               parentCost,

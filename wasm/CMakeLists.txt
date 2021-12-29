@@ -9,7 +9,7 @@ include_directories(lib/linalg lib/entt/src/entt src)
 
 set(TARGET_NAME module)
 
-add_executable(${TARGET_NAME} src/Main.cpp src/Main.h src/imports/ImportHandler.h src/imports/ImportHandler.cpp src/imports/ExportFlags.h src/commands/CommandHandler.h src/commands/Commands.h src/commands/Visual.h src/components/Components.h src/common/Structures.h src/systems/movement/MovementSystem.h src/Includes.h src/systems/influence/InfluenceSystem.h src/systems/SystemBase.h src/systems/influence/InfluenceMaps.h src/common/Pathfinder.cpp src/common/Pathfinder.h src/common/Math.h src/systems/map/MapSystem.h src/Signals.h src/common/Navigation.h src/common/PriorityQueue.h src/common/Pathcoster.cpp src/common/Pathcoster.h)
+add_executable(${TARGET_NAME} src/Main.cpp src/Main.h src/imports/ImportHandler.h src/imports/ImportHandler.cpp src/imports/ExportFlags.h src/commands/CommandHandler.h src/commands/Commands.h src/commands/Visual.h src/components/Components.h src/common/Structures.h src/systems/movement/MovementSystem.h src/Includes.h src/systems/influence/InfluenceSystem.h src/systems/SystemBase.h src/systems/influence/InfluenceMaps.h src/common/Pathfinder.cpp src/common/Pathfinder.h src/common/Math.h src/systems/map/MapSystem.h src/Signals.h src/common/Navigation.h src/common/PriorityQueue.h src/common/Pathcoster.cpp src/common/Pathcoster.h src/common/LineOfSight.cpp src/common/LineOfSight.h)
 
 # -s LLD_REPORT_UNDEFINED -Rpass=.* -O3 -msimd128 -msse4.1
 

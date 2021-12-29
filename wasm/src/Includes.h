@@ -26,4 +26,27 @@ constexpr int  INFLUENCE_MAP_STEP_SIZE = MAP_WIDTH - INFLUENCE_WIDTH;
 constexpr int  INFLUENCE_RADIUS        = 6;
 constexpr int2 INFLUENCE_CENTER        = int2(INFLUENCE_RADIUS, INFLUENCE_RADIUS);
 
+constexpr float INFLUENCE_ATTACK_THREAT_MULT = 0.005f;
+constexpr float INFLUENCE_RANGED_ATTACK_THREAT_MULT = 0.005f;
+
+enum struct Direction
+{
+    TOP          = 1,
+    TOP_RIGHT    = 2,
+    RIGHT        = 3,
+    BOTTOM_RIGHT = 4,
+    BOTTOM       = 5,
+    BOTTOM_LEFT  = 6,
+    LEFT         = 7,
+    TOP_LEFT     = 8
+};
+
+enum struct Terrain
+{
+    PLAIN = 0,
+    WALL  = 1,
+    SWAMP = 2,
+    NONE  = 3
+};
+
 #endif // OVERSEER_WASM_SRC_INCLUDES_H_
