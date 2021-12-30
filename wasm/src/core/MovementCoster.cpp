@@ -291,16 +291,15 @@ namespace Overseer::Core
             int currentLocalIndex = PosToIndex(WorldToLocal(currentWorldPos, movementMap.WorldStart), INTEREST_WIDTH) +
                                     movementMap.LocalStartIndex;
             auto node = movementMap.Nodes[currentLocalIndex];
-            printf("Path: %i    WorldIndex: %i    CameFrom: %i    CurrentLocalIndex: %i\n",
-                   pathIndex - 1,
-                   currentIndex,
-                   node.CameFrom,
-                   currentLocalIndex);
+            // printf("Path: %i    WorldIndex: %i    CameFrom: %i    CurrentLocalIndex: %i\n",
+            //        pathIndex - 1,
+            //        currentIndex,
+            //        node.CameFrom,
+            //        currentLocalIndex);
             currentIndex = node.CameFrom;
+            if (pathIndex >= 128)
+                throw printf("[WASM] Path length exceeded maximum of 128\n");
         } while (currentIndex != startIndex);
-
-        if (pathIndex >= 128)
-            throw printf("[WASM] Path length exceeded maximum of 128\n");
 
         int currIndex = 0;
         for (int i = pathIndex - 1; i >= 0; --i)

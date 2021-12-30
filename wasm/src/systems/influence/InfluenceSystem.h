@@ -50,8 +50,8 @@ namespace Overseer::Systems::Influence
             // int  ranX           = 0;
             for (auto entity : friendlyCreeps)
             {
-                if (entity != (entt::entity)16)
-                    continue;
+                // if (entity != (entt::entity)16)
+                //     continue;
                 // ranX++;
 
                 auto [pos, proxIMAP, threatIMAP, creepMovementMap, threat] = friendlyCreeps.get(entity);
@@ -91,7 +91,7 @@ namespace Overseer::Systems::Influence
                 AddThreatInfluence(enemyThreat, threatIMAP);
             }
 
-            DebugIMAP(friendlyThreat, 0.01f, 750);
+            // DebugIMAP(friendlyThreat, 0.01f, 750);
         }
 
       private:
@@ -195,7 +195,7 @@ namespace Overseer::Systems::Influence
 
                 if (count >= maxCount)
                 {
-                    printf("[WASM] LocalMap debug draw limit of %i elements hit\n", maxCount);
+                    printf("[WASM] InfluenceMap debug draw limit of %i elements hit\n", maxCount);
                     break;
                 }
             }

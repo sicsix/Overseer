@@ -65,21 +65,24 @@ namespace Overseer::Core::Math
         switch (vecIndex)
         {
             case 0:
-                return Direction::BOTTOM_LEFT;
+                return Direction::TOP_LEFT;
             case 1:
-                return Direction::BOTTOM;
+                return Direction::TOP;
             case 2:
-                return Direction::BOTTOM_RIGHT;
+                return Direction::TOP_RIGHT;
             case 3:
                 return Direction::LEFT;
             case 5:
                 return Direction::RIGHT;
             case 6:
-                return Direction::TOP_RIGHT;
+                return Direction::BOTTOM_LEFT;
             case 7:
-                return Direction::TOP;
+                return Direction::BOTTOM;
             case 8:
-                return Direction::TOP_RIGHT;
+                return Direction::BOTTOM_RIGHT;
+            case 4:
+                printf("DEFAULTING TO TOP, SAME TILE\n");
+                return Direction::TOP;
         }
         throw printf("INVALID DIRECTION\n");
     }

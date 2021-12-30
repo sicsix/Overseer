@@ -49,7 +49,6 @@ namespace Overseer::Systems::AI
 
         ~InterestTemplate()
         {
-            printf("DESTRUCTOR CALLED\n");
             if (Created)
                 delete[] Influence;
         }
@@ -62,17 +61,17 @@ namespace Overseer::Systems::AI
 
         ~InfluenceCache()
         {
-            printf("DESTRUCTOR CALLED\n");
             if (Created)
                 delete[] Influence;
         }
     };
 
-    class InterestMap : Core::LocalMap
+    class InterestMap : public Core::LocalMap
     {
-      private:
+      public:
         float Interest[INTEREST_SIZE] = { 0 };
 
+      private:
         InterestTemplate InterestTemplates[2][8];
         InfluenceCache   InfluenceCaches[6];
 
@@ -220,6 +219,15 @@ namespace Overseer::Systems::AI
             }
         }
 
+        void ApplyInterestTemplate(InterestType interestType)
+        {
+            InterestTemplate& interestTemplate = GetInterestTemplate(interestType, (InterestRange)INTEREST_RADIUS);
+            for (int i = 0; i < INTEREST_SIZE; i++)
+            {
+                Interest[i] *= interestTemplate.Influence[i];
+            }
+        }
+
         void ApplyInterestTemplate(InterestType interestType, InterestRange range)
         {
             InterestTemplate& interestTemplate = GetInterestTemplate(interestType, range);
@@ -231,34 +239,39 @@ namespace Overseer::Systems::AI
 
         int2 GetHighestPos()
         {
-            printf("10\n");
-            int offset = (rand() % INTEREST_SIZE);
-            printf("11\n");
+            int   offset   = (rand() % INTEREST_SIZE);
+            // printf("Offset: %i\n", offset);
             float max      = std::numeric_limits<float>::min();
             int   maxIndex = -1;
 
+            // printf("{ ");
             for (int i = offset; i < INTEREST_SIZE; ++i)
             {
                 float value = Interest[i];
+                // printf("{ Index: %i, Value: %f }, ", i, value);
                 if (value <= max)
                     continue;
                 max      = value;
                 maxIndex = i;
             }
+            // printf(" }\n");
 
+            // printf("{ ");
             for (int i = 0; i < offset; ++i)
             {
                 float value = Interest[i];
+                // printf("{Index: %i, Value: %f }, ", i, value);
                 if (value <= max)
                     continue;
                 max      = value;
                 maxIndex = i;
             }
+            // printf(" }\n");
 
             int2 localPos = IndexToPos(maxIndex, INTEREST_WIDTH);
             int2 worldPos = WorldStart + localPos;
 
-            printf("HIGHEST VAL: %f", max);
+            // printf("HIGHEST VAL: %f\n", max);
 
             return worldPos;
         }
@@ -422,7 +435,7 @@ namespace Overseer::Systems::AI
                     CreateProximityTemplate(temp.Influence, range);
                     break;
                 case InterestType::MovementMap:
-                    if ((int)range == INTEREST_WIDTH)
+                    if ((int)range == INTEREST_RADIUS)
                         CopyFromMovementMap(MyMovementMap, temp.Influence);
                     else
                         CreateMovementMapTemplate(MyMovementMap, temp.Influence, range);

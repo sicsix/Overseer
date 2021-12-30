@@ -35,12 +35,11 @@ namespace Overseer::Systems::AI
 
             for (auto entity : friendlyCreeps)
             {
-                if (entity != (entt::entity)16)
-                    continue;
+                // if (entity != (entt::entity)16)
+                //     continue;
 
                 auto [pos, proxIMAP, threatIMAP, movementMap, threat, path] = friendlyCreeps.get(entity);
 
-                printf("1\n");
                 // TODO get SL movement map
                 auto interestMap = InterestMap(pos.Val,
                                                proxIMAP,
@@ -52,29 +51,68 @@ namespace Overseer::Systems::AI
                                                enemyProx,
                                                enemyThreat,
                                                navMap);
-                printf("2\n");
+
                 interestMap.Add(InfluenceType::FriendlyProx, 1.0f);
-                printf("3\n");
                 interestMap.Add(InfluenceType::MyProx, -1.0f);
-                printf("4\n");
                 interestMap.Normalise();
-                printf("5\n");
-                // int2 target = interestMap.GetHighestPos();
-                // printf("6: Pos: { %i, %i }    TARGET: { %i, %i }\n", pos.Val.x, pos.Val.y, target.x, target.y);
-                int2 target = int2(3, 3);
+                interestMap.ApplyInterestTemplate(InterestType::Proximity);
+                int2 target = interestMap.GetHighestPos();
+                // TODO highest pos seems to be returning values outside of range? Check northmost Creep 10
+
+                DebugInterest(interestMap, 0.01f, INTEREST_SIZE);
+
+                // TODO HANDLE NOT RETURNING A REAL TARGET? OTHERWISE WE CRASH! IE WITH NO NEARBY CREEPS IT JUS DIES
+
+                printf("6: Pos: { %i, %i }    TARGET: { %i, %i }\n", pos.Val.x, pos.Val.y, target.x, target.y);
+                // target = int2(3, 3);
                 Core::MovementCoster::GetPath(
                     PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(target, MAP_WIDTH), movementMap, path);
-                printf("7\n");
 
+                // TODO Should return no path if target == same, check path not zero length before doing below
                 auto direction = GetDirection(pos.Val, path.Val[0]);
-                printf("8\n");
-
                 CommandHandler::Add(Move((double)entity, (double)direction));
-                printf("9\n");
             }
         }
 
       private:
+
+        void DebugInterest(InterestMap interestMap, float minVal, int maxCount)
+        {
+            int worldIndex = interestMap.WorldStartIndex;
+            int localIndex = interestMap.LocalStartIndex;
+
+            int width           = interestMap.LocalEnd.x - interestMap.LocalStart.x;
+            int worldYIncrement = MAP_WIDTH - width;
+            int localYIncrement = INTEREST_WIDTH - width;
+
+            int count = 0;
+            for (int y = interestMap.LocalStart.y; y < interestMap.LocalEnd.y; ++y)
+            {
+                for (int x = interestMap.LocalStart.x; x < interestMap.LocalEnd.x; ++x)
+                {
+                    float interest = interestMap.Interest[localIndex];
+                    auto pos = (double2)IndexToPos(worldIndex, MAP_WIDTH);
+
+                    if (interest > minVal)
+                    {
+                        count++;
+                        CommandHandler::Add(GameVisualRect(pos, { 1.0, 1.0 }, Colour::RED, min(interest, 1.0f)));
+                    }
+
+                    if (count >= maxCount)
+                    {
+                        printf("[WASM] InterestMap debug draw limit of %i elements hit\n", maxCount);
+                        break;
+                    }
+
+                    worldIndex++;
+                    localIndex++;
+                }
+
+                worldIndex += worldYIncrement;
+                localIndex += localYIncrement;
+            }
+        }
     };
 } // namespace Overseer::Systems::AI
 #endif // OVERSEER_WASM_SRC_SYSTEMS_AI_AISYSTEM_H_

@@ -26,6 +26,8 @@ namespace Overseer
         influenceSystem.Initialise(Registry);
         aiSystem.Initialise(Registry);
         movementSystem.Initialise(Registry);
+
+        rand();
     }
 
     int Main::Execute(uint objectCount)
