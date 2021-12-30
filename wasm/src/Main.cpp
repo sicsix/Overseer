@@ -7,12 +7,14 @@
 #include "systems/movement/MovementSystem.h"
 #include "systems/influence/InfluenceSystem.h"
 #include "core/Pathfinder.h"
+#include "systems/ai/AISystem.h"
 
 namespace Overseer
 {
     Systems::MapSystem                  mapSystem;
-    Systems::MovementSystem             movementSystem;
     Systems::Influence::InfluenceSystem influenceSystem;
+    Systems::AI::AISystem               aiSystem;
+    Systems::MovementSystem             movementSystem;
 
     Main::Main(uint* importBuffer, double* commandBuffer): ImportBuffer(importBuffer)
     {
@@ -22,6 +24,7 @@ namespace Overseer
 
         mapSystem.Initialise(Registry);
         influenceSystem.Initialise(Registry);
+        aiSystem.Initialise(Registry);
         movementSystem.Initialise(Registry);
     }
 
@@ -35,6 +38,9 @@ namespace Overseer
 
         printf("[WASM] Running InfluenceSystem...\n");
         influenceSystem.Update(Registry);
+
+        printf("[WASM] Running AISystem...\n");
+        aiSystem.Update(Registry);
 
         printf("[WASM] Running MovementSystem...\n");
         movementSystem.Update(Registry);

@@ -21,19 +21,18 @@ namespace Overseer::Core
       public:
         MovementCoster(NavMap& navMap);
 
-        void Update(CreepThreatIMAP& threatIMAP, CreepMovementMap& creepMovementMap);
+        void Update(CreepMovementMap& creepMovementMap);
+
+        static void GetPath(int startIndex, int goalIndex, CreepMovementMap& movementMap, Path& path);
 
       private:
         static void Update(NavMap&                              navMap,
-                           CreepThreatIMAP&                     threatIMAP,
-                           CreepMovementMap&                    creepMovementMap,
+                           CreepMovementMap& movementMap,
                            Core::PriorityQueue<int, QueueNode>& openSet);
 
         static void ProcessDirections(NavMap&                              navMap,
                                       int2&                                currWorldPos,
                                       int2&                                currInfPos,
-                                      int2&                                worldStart,
-                                      int2&                                worldEnd,
                                       int                                  index,
                                       int                                  parentCost,
                                       CreepMovementMap&                    creepMovementMap,

@@ -24,8 +24,6 @@ namespace Overseer::Core
 
         bool FindPath(int2& start, int2& goal, Components::Path& path);
 
-        static void GetPath(int startIndex, int goalIndex, Node* nodeSet, Path& path);
-
       private:
         static bool FindPath(NavMap&                              navMap,
                              int2&                                start,
@@ -42,6 +40,8 @@ namespace Overseer::Core
                                       Overseer::Core::PriorityQueue<int, QueueNode>& openSet,
                                       Node*                                          nodeSet,
                                       int4x2                                         offsets);
+
+        static void GetPath(int startIndex, int goalIndex, Node* nodeSet, Path& path);
     };
 } // namespace Overseer::Core
 

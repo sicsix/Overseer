@@ -91,33 +91,6 @@ namespace Overseer::Core
         return true;
     }
 
-    // TODO this will only work when the node is the same size as map, need different version for converting MovementCoster nodes to a path
-    void Pathfinder::GetPath(int startIndex, int goalIndex, Node* nodeSet, Path& path)
-    {
-        int currentIndex = goalIndex;
-        int reversePathArray[128]; // TODO pass this in and reuse it
-        int pathIndex = 0;
-
-        do
-        {
-            reversePathArray[pathIndex++] = currentIndex;
-            auto node                     = nodeSet[currentIndex];
-            currentIndex                  = node.CameFrom;
-            // printf("CURR INDEX %i, PATH INDEX %i\n", currentIndex, pathIndex);
-        } while (currentIndex != startIndex);
-
-        if (pathIndex >= 128)
-            throw printf("[WASM] Path length exceeded maximum of 128\n");
-
-        int currIndex = 0;
-        for (int i = pathIndex - 1; i >= 0; --i)
-        {
-            path.Val[currIndex] = IndexToPos(reversePathArray[i], MAP_WIDTH);
-            currIndex++;
-        }
-        path.Count = pathIndex;
-    }
-
     void Pathfinder::ProcessDirections(NavMap&                              navMap,
                                        int2&                                pos,
                                        int2&                                goal,
@@ -201,5 +174,31 @@ namespace Overseer::Core
             openSet.Push(expectedCosts.z, QueueNode(currentIndexes.z, costSoFar.z));
         if (isTileValid.w)
             openSet.Push(expectedCosts.w, QueueNode(currentIndexes.w, costSoFar.w));
+    }
+
+    void Pathfinder::GetPath(int startIndex, int goalIndex, Node* nodeSet, Path& path)
+    {
+        int currentIndex = goalIndex;
+        int reversePathArray[128]; // TODO pass this in and reuse it
+        int pathIndex = 0;
+
+        do
+        {
+            reversePathArray[pathIndex++] = currentIndex;
+            auto node                     = nodeSet[currentIndex];
+            printf("Path: %i    WorldIndex: %i    CameFrom: %i\n", pathIndex, currentIndex, node.CameFrom);
+            currentIndex                  = node.CameFrom;
+        } while (currentIndex != startIndex);
+
+        if (pathIndex >= 128)
+            throw printf("[WASM] Path length exceeded maximum of 128\n");
+
+        int currIndex = 0;
+        for (int i = pathIndex - 1; i >= 0; --i)
+        {
+            path.Val[currIndex] = IndexToPos(reversePathArray[i], MAP_WIDTH);
+            currIndex++;
+        }
+        path.Count = pathIndex;
     }
 } // namespace Overseer::Core

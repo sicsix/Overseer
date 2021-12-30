@@ -43,7 +43,7 @@ namespace Overseer::Core
         int  LocalCenterIndex;
         int  LocalStartIndex;
 
-        constexpr void ClampAndSetBounds(int2 center, int localMapRadius, int localMapWidth)
+        void ClampAndSetBounds(int2 center, int localMapRadius, int localMapWidth)
         {
             int2 worldStartUnclamped = center - localMapRadius;
             int2 worldEndUnclamped   = center + localMapRadius + 1;

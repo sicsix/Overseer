@@ -40,11 +40,12 @@ namespace Overseer::Systems::Influence
         }
 
       private:
-        static void SetAttackThreat(CreepThreatIMAP& threatIMAP, Threat& threat, CreepMovementMap& creepMovementMap)
+        static void SetAttackThreat(CreepThreatIMAP& threatIMAP, Threat& threat, CreepMovementMap& movementMap)
         {
             int localIndex = threatIMAP.LocalStartIndex;
-            int movIndex = PosToIndex(WorldToLocal(threatIMAP.WorldStart, creepMovementMap.WorldStart), INTEREST_WIDTH);
-            int width    = threatIMAP.LocalEnd.x - threatIMAP.LocalStart.x;
+            int movIndex   = PosToIndex(WorldToLocal(threatIMAP.WorldStart, movementMap.WorldStart), INTEREST_WIDTH) +
+                           movementMap.LocalStartIndex;
+            int width           = threatIMAP.LocalEnd.x - threatIMAP.LocalStart.x;
             int localYIncrement = INFLUENCE_THREAT_WIDTH - width;
             int movYIncrement   = INTEREST_WIDTH - width;
 
@@ -63,21 +64,21 @@ namespace Overseer::Systems::Influence
             //     threatIMAP.LocalEnd.y,
             //     threatIMAP.LocalStartIndex,
             //     localYIncrement);
-            //
+			//
             // printf(
             //     "MOVE - WorldStart: { %i, %i }    WorldEnd: { %i, %i }    WorldCenter: { %i, %i }    WorldStartIndex: %i    LocalStart: { %i, %i }    LocalEnd: { %i, %i }    LocalStartIndex: %i    LocalYIncrement: %i    AdjustedStart: %i\n",
-            //     creepMovementMap.WorldStart.x,
-            //     creepMovementMap.WorldStart.y,
-            //     creepMovementMap.WorldEnd.x,
-            //     creepMovementMap.WorldEnd.y,
-            //     creepMovementMap.WorldCenter.x,
-            //     creepMovementMap.WorldCenter.y,
-            //     creepMovementMap.WorldStartIndex,
-            //     creepMovementMap.LocalStart.x,
-            //     creepMovementMap.LocalStart.y,
-            //     creepMovementMap.LocalEnd.x,
-            //     creepMovementMap.LocalEnd.y,
-            //     creepMovementMap.LocalStartIndex,
+            //     movementMap.WorldStart.x,
+            //     movementMap.WorldStart.y,
+            //     movementMap.WorldEnd.x,
+            //     movementMap.WorldEnd.y,
+            //     movementMap.WorldCenter.x,
+            //     movementMap.WorldCenter.y,
+            //     movementMap.WorldStartIndex,
+            //     movementMap.LocalStart.x,
+            //     movementMap.LocalStart.y,
+            //     movementMap.LocalEnd.x,
+            //     movementMap.LocalEnd.y,
+            //     movementMap.LocalStartIndex,
             //     movYIncrement,
             //     movIndex);
 
@@ -86,7 +87,7 @@ namespace Overseer::Systems::Influence
             {
                 for (int x = threatIMAP.LocalStart.x; x < threatIMAP.LocalEnd.x; ++x)
                 {
-                    int   moveCost = creepMovementMap.Nodes[movIndex].Cost * threat.TicksPerMove;
+                    int   moveCost = movementMap.Nodes[movIndex].Cost * threat.TicksPerMove;
                     float distBase = CalculateInverseLinearInfluence(1.0f, moveCost, INFLUENCE_THREAT_RADIUS);
                     float inf      = distBase * threat.AttackDamage * INFLUENCE_THREAT_ATTACK_FACTOR;
                     threatIMAP.Influence[localIndex] = inf;

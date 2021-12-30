@@ -184,7 +184,7 @@ namespace Overseer::Components
 
     struct CreepMovementMap : Core::LocalMap
     {
-        Core::Node* Nodes = new Core::Node[INTEREST_SIZE];
+        Core::Node* Nodes = new Core::Node[INTEREST_SIZE + 1];
     };
 
 } // namespace Overseer::Components

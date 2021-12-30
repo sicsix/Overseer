@@ -19,12 +19,12 @@ namespace Overseer::Systems
 
         void Update(entt::registry& registry) override
         {
-            auto view = registry.view<My, Path>();
-
-            for (auto entity : view)
-            {
-                CommandHandler::Add(Move((double)entity, (double)Direction::BOTTOM_RIGHT));
-            }
+            // auto view = registry.view<My, Path>();
+            //
+            // for (auto entity : view)
+            // {
+            //     CommandHandler::Add(Move((double)entity, (double)Direction::BOTTOM_RIGHT));
+            // }
         }
     };
 } // namespace Overseer::Systems

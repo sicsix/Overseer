@@ -57,6 +57,33 @@ namespace Overseer::Core::Math
         return worldPos - localWorldStart;
     }
 
+    inline static Direction GetDirection(int2& orig, int2& dest)
+    {
+        int2 vector = dest - orig + 1;
+        int vecIndex = vector.y * 3 + vector.x;
+
+        switch (vecIndex)
+        {
+            case 0:
+                return Direction::BOTTOM_LEFT;
+            case 1:
+                return Direction::BOTTOM;
+            case 2:
+                return Direction::BOTTOM_RIGHT;
+            case 3:
+                return Direction::LEFT;
+            case 5:
+                return Direction::RIGHT;
+            case 6:
+                return Direction::TOP_RIGHT;
+            case 7:
+                return Direction::TOP;
+            case 8:
+                return Direction::TOP_RIGHT;
+        }
+        throw printf("INVALID DIRECTION\n");
+    }
+
     inline static int DistanceManhattan(int2& orig, int2& dest)
     {
         return sum(abs(dest - orig));

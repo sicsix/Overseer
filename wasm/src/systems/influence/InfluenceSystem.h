@@ -50,8 +50,8 @@ namespace Overseer::Systems::Influence
             // int  ranX           = 0;
             for (auto entity : friendlyCreeps)
             {
-                // if (entity != (entt::entity)16)
-                //     continue;
+                if (entity != (entt::entity)16)
+                    continue;
                 // ranX++;
 
                 auto [pos, proxIMAP, threatIMAP, creepMovementMap, threat] = friendlyCreeps.get(entity);
@@ -60,9 +60,8 @@ namespace Overseer::Systems::Influence
 
                 proxIMAP.ClampAndSetBounds(pos.Val, INFLUENCE_PROX_RADIUS, INFLUENCE_PROX_WIDTH);
                 threatIMAP.ClampAndSetBounds(pos.Val, INFLUENCE_THREAT_RADIUS, INFLUENCE_THREAT_WIDTH);
-
-                movementCoster.Update(threatIMAP, creepMovementMap);
                 creepMovementMap.ClampAndSetBounds(pos.Val, INTEREST_RADIUS, INTEREST_WIDTH);
+                movementCoster.Update(creepMovementMap);
 
                 ProximityInfluence::Calculate(proxIMAP, navMap);
                 ThreatInfluence::Calculate(threatIMAP, lineOfSight, threat, creepMovementMap);
@@ -82,9 +81,8 @@ namespace Overseer::Systems::Influence
 
                 proxIMAP.ClampAndSetBounds(pos.Val, INFLUENCE_PROX_RADIUS, INFLUENCE_PROX_WIDTH);
                 threatIMAP.ClampAndSetBounds(pos.Val, INFLUENCE_THREAT_RADIUS, INFLUENCE_THREAT_WIDTH);
-
-                movementCoster.Update(threatIMAP, creepMovementMap);
                 creepMovementMap.ClampAndSetBounds(pos.Val, INTEREST_RADIUS, INTEREST_WIDTH);
+                movementCoster.Update(creepMovementMap);
 
                 ProximityInfluence::Calculate(proxIMAP, navMap);
                 ThreatInfluence::Calculate(threatIMAP, lineOfSight, threat, creepMovementMap);
@@ -93,7 +91,7 @@ namespace Overseer::Systems::Influence
                 AddThreatInfluence(enemyThreat, threatIMAP);
             }
 
-            DebugIMAP(enemyProx, 0.01f, 750);
+            DebugIMAP(friendlyThreat, 0.01f, 750);
         }
 
       private:

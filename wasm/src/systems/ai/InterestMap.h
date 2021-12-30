@@ -49,8 +49,9 @@ namespace Overseer::Systems::AI
 
         ~InterestTemplate()
         {
-            printf("DESTRUCTOR CALLED");
-            delete[] Influence;
+            printf("DESTRUCTOR CALLED\n");
+            if (Created)
+                delete[] Influence;
         }
     };
 
@@ -61,7 +62,9 @@ namespace Overseer::Systems::AI
 
         ~InfluenceCache()
         {
-            delete[] Influence;
+            printf("DESTRUCTOR CALLED\n");
+            if (Created)
+                delete[] Influence;
         }
     };
 
@@ -228,7 +231,9 @@ namespace Overseer::Systems::AI
 
         int2 GetHighestPos()
         {
-            int   offset   = Random::get(0, INTEREST_SIZE);
+            printf("10\n");
+            int offset = (rand() % INTEREST_SIZE);
+            printf("11\n");
             float max      = std::numeric_limits<float>::min();
             int   maxIndex = -1;
 
@@ -252,6 +257,8 @@ namespace Overseer::Systems::AI
 
             int2 localPos = IndexToPos(maxIndex, INTEREST_WIDTH);
             int2 worldPos = WorldStart + localPos;
+
+            printf("HIGHEST VAL: %f", max);
 
             return worldPos;
         }
