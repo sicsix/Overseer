@@ -18,6 +18,7 @@
       <file path="$PROJECT_DIR$/wasm/lib/EAThread" />
       <file path="$PROJECT_DIR$/wasm/lib/entt" />
       <file path="$PROJECT_DIR$/wasm/lib/linalg" />
+      <file path="$PROJECT_DIR$/wasm/lib/random" />
     </libraryRoots>
     <excludeRoots>
       <file path="$PROJECT_DIR$/dist" />

@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 set(CMAKE_BUILD_TYPE Release)
 
-include_directories(lib/linalg lib/entt/src/entt src)
+include_directories(lib/linalg lib/entt/src/entt src lib/random/include)
 
 set(TARGET_NAME module)
 

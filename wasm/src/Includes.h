@@ -7,6 +7,8 @@
 
 #include <cstdio>
 #include "linalg.h"
+#include "effolkronium/random.hpp"
+using Random = effolkronium::random_static;
 
 using namespace linalg::aliases;
 using namespace linalg;

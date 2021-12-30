@@ -5,3 +5,6 @@
 [submodule "wasm/lib/entt"]
 	path = wasm/lib/entt
 	url = https://github.com/skypjack/entt/
+[submodule "wasm/lib/random"]
+	path = wasm/lib/random
+	url = https://github.com/effolkronium/random

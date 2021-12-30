@@ -8,6 +8,7 @@
 #include "core/Math.h"
 #include "core/Influence.h"
 #include "components/Components.h"
+#include "core/Structures.h"
 
 namespace Overseer::Systems::AI
 {
@@ -18,57 +19,92 @@ namespace Overseer::Systems::AI
         FriendlyProx,
         FriendlyThreat,
         EnemyProx,
-        EnemyThreat
+        EnemyThreat,
+        SquadLeaderMovementMap
     };
 
     enum struct InterestType
     {
-        Distance, // Distance with no pathfinding
-        Proximity // With pathfinding - perhaps use cached values from influence calcs? expand size to INTEREST_SIZE
+        Proximity,
+        MovementMap
     };
 
-    struct InterestTemplate : Core::LocalMap
+    enum struct InterestRange
     {
-        float* Influence = new float[INTEREST_SIZE] { 0 };
-        bool   Created   = false;
+        Range1 = 1,
+        Range2 = 2,
+        Range3 = 3,
+        Range4 = 4,
+        Range5 = 5,
+        Range6 = 6,
+        Range7 = 7,
+        Range8 = 8
     };
 
-    struct InfluenceCache : Core::LocalMap
+    // TODO maybe store these on the stack instead?
+    struct InterestTemplate
     {
-        float* Influence = new float[INTEREST_SIZE] { 0 };
-        bool   Created   = false;
+        float* Influence;
+        bool   Created = false;
+
+        ~InterestTemplate()
+        {
+            printf("DESTRUCTOR CALLED");
+            delete[] Influence;
+        }
     };
 
-    class InterestMap
+    struct InfluenceCache
+    {
+        float* Influence;
+        bool   Created = false;
+
+        ~InfluenceCache()
+        {
+            delete[] Influence;
+        }
+    };
+
+    class InterestMap : Core::LocalMap
     {
       private:
         float Interest[INTEREST_SIZE] = { 0 };
-        int2  WorldCenter;
 
-        InterestTemplate InterestTemplates[2];
+        InterestTemplate InterestTemplates[2][8];
         InfluenceCache   InfluenceCaches[6];
 
-        Components::CreepProxIMAP   MyProxIMAP;
-        Components::CreepThreatIMAP MyThreatIMAP;
-        Core::FriendlyProxIMAP      FriendlyProxIMAP;
-        Core::FriendlyThreatIMAP    FriendlyThreatIMAP;
-        Core::EnemyProxIMAP         EnemyProxIMAP;
-        Core::EnemyThreatIMAP       EnemyThreatIMAP;
+        CreepProxIMAP            MyProxIMAP;
+        CreepThreatIMAP          MyThreatIMAP;
+        CreepMovementMap         MyMovementMap;
+        CreepMovementMap         SquadLeaderMovementMap;
+        Core::FriendlyProxIMAP   FriendlyProxIMAP;
+        Core::FriendlyThreatIMAP FriendlyThreatIMAP;
+        Core::EnemyProxIMAP      EnemyProxIMAP;
+        Core::EnemyThreatIMAP    EnemyThreatIMAP;
+        Core::NavMap             NavMap;
 
       public:
-        InterestMap(const CreepProxIMAP&            myProxIMAP,
+        InterestMap(int2                            center,
+                    const CreepProxIMAP&            myProxIMAP,
                     const CreepThreatIMAP&          myThreatIMAP,
+                    const CreepMovementMap&         myMovementMap,
+                    const CreepMovementMap&         squadLeaderMovementMap,
                     const Core::FriendlyProxIMAP&   friendlyProxIMAP,
                     const Core::FriendlyThreatIMAP& friendlyThreatIMAP,
                     const Core::EnemyProxIMAP&      enemyProxIMAP,
-                    const Core::EnemyThreatIMAP&    enemyThreatIMAP):
+                    const Core::EnemyThreatIMAP&    enemyThreatIMAP,
+                    const Core::NavMap&             navMap):
             MyProxIMAP(myProxIMAP),
             MyThreatIMAP(myThreatIMAP),
+            MyMovementMap(myMovementMap),
+            SquadLeaderMovementMap(squadLeaderMovementMap),
             FriendlyProxIMAP(friendlyProxIMAP),
             FriendlyThreatIMAP(friendlyThreatIMAP),
             EnemyProxIMAP(enemyProxIMAP),
-            EnemyThreatIMAP(enemyThreatIMAP)
+            EnemyThreatIMAP(enemyThreatIMAP),
+            NavMap(navMap)
         {
+            ClampAndSetBounds(center, INTEREST_RADIUS, INTEREST_WIDTH);
         }
 
         void Clear()
@@ -84,7 +120,7 @@ namespace Overseer::Systems::AI
             for (int i = 0; i < INTEREST_SIZE; i++)
             {
                 float value = Interest[i];
-                value += influenceCache.Influence[i] + multiplier;
+                value       = influenceCache.Influence[i] * multiplier + value;
                 Interest[i] = value;
             }
         }
@@ -95,8 +131,24 @@ namespace Overseer::Systems::AI
             for (int i = 0; i < INTEREST_SIZE; i++)
             {
                 float value = Interest[i];
-                value += influenceCache.Influence[i] * multiplier;
+                value       = influenceCache.Influence[i] * multiplier * value;
                 Interest[i] = value;
+            }
+        }
+
+        void Clamp(float minimum, float maximum)
+        {
+            for (int i = 0; i < INTEREST_SIZE; i++)
+            {
+                Interest[i] = clamp(Interest[i], minimum, maximum);
+            }
+        }
+
+        void ClampToZero()
+        {
+            for (int i = 0; i < INTEREST_SIZE; i++)
+            {
+                Interest[i] = max(Interest[i], 0.0f);
             }
         }
 
@@ -165,9 +217,9 @@ namespace Overseer::Systems::AI
             }
         }
 
-        void ApplyInterestTemplate(InterestType interestType, int radius)
+        void ApplyInterestTemplate(InterestType interestType, InterestRange range)
         {
-            InterestTemplate& interestTemplate = GetInterestTemplate(interestType, radius);
+            InterestTemplate& interestTemplate = GetInterestTemplate(interestType, range);
             for (int i = 0; i < INTEREST_SIZE; i++)
             {
                 Interest[i] *= interestTemplate.Influence[i];
@@ -176,10 +228,37 @@ namespace Overseer::Systems::AI
 
         int2 GetHighestPos()
         {
+            int   offset   = Random::get(0, INTEREST_SIZE);
+            float max      = std::numeric_limits<float>::min();
+            int   maxIndex = -1;
+
+            for (int i = offset; i < INTEREST_SIZE; ++i)
+            {
+                float value = Interest[i];
+                if (value <= max)
+                    continue;
+                max      = value;
+                maxIndex = i;
+            }
+
+            for (int i = 0; i < offset; ++i)
+            {
+                float value = Interest[i];
+                if (value <= max)
+                    continue;
+                max      = value;
+                maxIndex = i;
+            }
+
+            int2 localPos = IndexToPos(maxIndex, INTEREST_WIDTH);
+            int2 worldPos = WorldStart + localPos;
+
+            return worldPos;
         }
 
         float GetCenter()
         {
+            return Interest[LocalCenterIndex];
         }
 
       private:
@@ -187,44 +266,204 @@ namespace Overseer::Systems::AI
         {
             InfluenceCache& cache = InfluenceCaches[(int)influenceType];
             if (!cache.Created)
-            {
-                if (influenceType == InfluenceType::MyProx || influenceType == InfluenceType::MyThreat)
-                    InfluenceCaches[(int)influenceType] = CreateMyInfluenceCache(influenceType, cache);
-                else
-                    InfluenceCaches[(int)influenceType] = CreateInfluenceCache(influenceType, cache);
-            }
-            return cache;
-        }
-
-        InfluenceCache& CreateMyInfluenceCache(InfluenceType influenceType, InfluenceCache& cache)
-        {
-            cache.Created    = true;
-            float* influence = cache.Influence;
-            // todo for x,y loop, using personal offsets
+                InfluenceCaches[(int)influenceType] = CreateInfluenceCache(influenceType, cache);
             return cache;
         }
 
         InfluenceCache& CreateInfluenceCache(InfluenceType influenceType, InfluenceCache& cache)
         {
-            cache.Created    = true;
-            float* influence = cache.Influence;
-            // todo for x,y loop using map offsets
+            cache.Created = true;
+            switch (influenceType)
+            {
+                case InfluenceType::MyProx:
+                    cache.Influence = new float[INTEREST_SIZE] { 0 };
+                    CopyFromProxMap(MyProxIMAP, cache.Influence);
+                    break;
+                case InfluenceType::MyThreat:
+                    cache.Influence = new float[INTEREST_SIZE] { 0 };
+                    CopyFromThreatMap(MyThreatIMAP, cache.Influence);
+                    break;
+                case InfluenceType::FriendlyProx:
+                    cache.Influence = new float[INTEREST_SIZE];
+                    CopyFromIMAP(FriendlyProxIMAP, cache.Influence);
+                    break;
+                case InfluenceType::FriendlyThreat:
+                    cache.Influence = new float[INTEREST_SIZE];
+                    CopyFromIMAP(FriendlyThreatIMAP, cache.Influence);
+                    break;
+                case InfluenceType::EnemyProx:
+                    cache.Influence = new float[INTEREST_SIZE];
+                    CopyFromIMAP(EnemyProxIMAP, cache.Influence);
+                    break;
+                case InfluenceType::EnemyThreat:
+                    cache.Influence = new float[INTEREST_SIZE];
+                    CopyFromIMAP(EnemyThreatIMAP, cache.Influence);
+                    break;
+                case InfluenceType::SquadLeaderMovementMap:
+                    cache.Influence = new float[INTEREST_SIZE] { 0 };
+                    CopyFromMovementMap(SquadLeaderMovementMap, cache.Influence);
+                    break;
+            }
+
             return cache;
         }
 
-        InterestTemplate& GetInterestTemplate(InterestType interestType, int radius)
+        void CopyFromIMAP(Core::IMAP& imap, float* influence)
         {
-            InterestTemplate& temp = InterestTemplates[(int)interestType];
+            int worldIndex = WorldStartIndex;
+            int localIndex = LocalStartIndex;
+
+            int width           = LocalEnd.x - LocalStart.x;
+            int worldYIncrement = MAP_WIDTH - width;
+            int localYIncrement = INTEREST_WIDTH - width;
+
+            // printf("CopyFromIMAP: { ");
+            for (int y = LocalStart.y; y < LocalEnd.y; ++y)
+            {
+                for (int x = LocalStart.x; x < LocalEnd.x; ++x)
+                {
+                    float inf             = imap.Influence[worldIndex];
+                    influence[localIndex] = inf;
+                    // printf("Inf: %f, ", inf);
+                    worldIndex++;
+                    localIndex++;
+                }
+                worldIndex += worldYIncrement;
+                localIndex += localYIncrement;
+            }
+            // printf("} \n");
+        }
+
+        void CopyFromProxMap(CreepProxIMAP& proxIMAP, float* influence)
+        {
+            int interestIndex = PosToIndex(proxIMAP.WorldStart - WorldStart, INTEREST_WIDTH) + LocalStartIndex;
+            int proxIndex     = proxIMAP.LocalStartIndex;
+
+            int width              = proxIMAP.LocalEnd.x - proxIMAP.LocalStart.x;
+            int interestYIncrement = INTEREST_WIDTH - width;
+            int proxYIncrement     = INFLUENCE_PROX_WIDTH - width;
+
+            // printf("CopyFromProxMap: { ");
+            for (int y = proxIMAP.LocalStart.y; y < proxIMAP.LocalEnd.y; ++y)
+            {
+                for (int x = proxIMAP.LocalStart.x; x < proxIMAP.LocalEnd.x; ++x)
+                {
+                    float inf                = proxIMAP.Influence[proxIndex];
+                    influence[interestIndex] = inf;
+                    // printf("Inf: %f, ", inf);
+                    interestIndex++;
+                    proxIndex++;
+                }
+                interestIndex += interestYIncrement;
+                proxIndex += proxYIncrement;
+            }
+            // printf("} \n");
+        };
+
+        void CopyFromThreatMap(CreepThreatIMAP& threatIMAP, float* influence)
+        {
+            int interestIndex = PosToIndex(threatIMAP.WorldStart - WorldStart, INTEREST_WIDTH) + LocalStartIndex;
+            int threatIndex   = threatIMAP.LocalStartIndex;
+
+            int width              = threatIMAP.LocalEnd.x - threatIMAP.LocalStart.x;
+            int interestYIncrement = INTEREST_WIDTH - width;
+            int threatYIncrement   = INFLUENCE_THREAT_WIDTH - width;
+
+            // printf("CopyFromThreatMap: { ");
+            for (int y = threatIMAP.LocalStart.y; y < threatIMAP.LocalEnd.y; ++y)
+            {
+                for (int x = threatIMAP.LocalStart.x; x < threatIMAP.LocalEnd.x; ++x)
+                {
+                    float inf                = threatIMAP.Influence[threatIndex];
+                    influence[interestIndex] = inf;
+                    // printf("Inf: %f, ", inf);
+                    interestIndex++;
+                    threatIndex++;
+                }
+                interestIndex += interestYIncrement;
+                threatIndex += threatYIncrement;
+            }
+            // printf("} \n");
+        };
+
+        void CopyFromMovementMap(CreepMovementMap& movementMap, float* influence)
+        {
+            for (int i = 0; i < INTEREST_SIZE; ++i)
+            {
+                int cost     = movementMap.Nodes[i].Cost;
+                // Turns 0 -> distance into 1 -> 0
+                influence[i] = CalculateInverseLinearInfluence(1.0f, cost, INTEREST_WIDTH);
+            }
+        }
+
+        InterestTemplate& GetInterestTemplate(InterestType interestType, InterestRange range)
+        {
+            InterestTemplate& temp = InterestTemplates[(int)interestType][(int)range];
             if (!temp.Created)
-                InterestTemplates[(int)interestType] = CreateInterestTemplate(interestType, temp);
+                InterestTemplates[(int)interestType][(int)range] = CreateInterestTemplate(interestType, range, temp);
             return temp;
         }
 
-        InterestTemplate& CreateInterestTemplate(InterestType interestType, InterestTemplate& temp)
+        InterestTemplate& CreateInterestTemplate(InterestType interestType, InterestRange range, InterestTemplate& temp)
         {
-            temp.Created     = true;
-            float* influence = temp.Influence;
+            temp.Created   = true;
+            temp.Influence = new float[INTEREST_SIZE];
+
+            switch (interestType)
+            {
+                case InterestType::Proximity:
+                    CreateProximityTemplate(temp.Influence, range);
+                    break;
+                case InterestType::MovementMap:
+                    if ((int)range == INTEREST_WIDTH)
+                        CopyFromMovementMap(MyMovementMap, temp.Influence);
+                    else
+                        CreateMovementMapTemplate(MyMovementMap, temp.Influence, range);
+                    break;
+            }
+
             return temp;
+        }
+
+        void CreateProximityTemplate(float* influence, InterestRange range)
+        {
+            int worldIndex = WorldStartIndex;
+            int localIndex = LocalStartIndex;
+
+            int width           = LocalEnd.x - LocalStart.x;
+            int worldYIncrement = MAP_WIDTH - width;
+            int localYIncrement = INTEREST_WIDTH - width;
+
+            int rangeInt = (int)range;
+
+            // printf("CreateProximityTemplate: { ");
+            for (int y = LocalStart.y; y < LocalEnd.y; ++y)
+            {
+                for (int x = LocalStart.x; x < LocalEnd.x; ++x)
+                {
+                    int dist              = DistanceChebyshev(LocalCenter, int2(x, y));
+                    dist                  = NavMap.Map[worldIndex] == INT_MAXVALUE ? rangeInt : dist;
+                    float inf             = CalculateInverseLinearInfluence(1.0f, dist, rangeInt);
+                    influence[localIndex] = inf;
+                    // printf("{ WorldIndex: %i, LocalIndex: %i, Inf: %f }, ", worldIndex, localIndex, inf);
+                    worldIndex++;
+                    localIndex++;
+                }
+                worldIndex += worldYIncrement;
+                localIndex += localYIncrement;
+            }
+            // printf("} \n");
+        }
+
+        void CreateMovementMapTemplate(CreepMovementMap& movementMap, float* influence, InterestRange range)
+        {
+            float maxDist = (float)range;
+            for (int i = 0; i < INTEREST_SIZE; ++i)
+            {
+                int cost     = movementMap.Nodes[i].Cost;
+                // Turns 0 -> distance into 1 -> 0
+                influence[i] = CalculateInverseLinearInfluence(1.0f, cost, maxDist);
+            }
         }
     };
 } // namespace Overseer::Systems::AI

@@ -93,7 +93,7 @@ namespace Overseer::Systems::Influence
                 AddThreatInfluence(enemyThreat, threatIMAP);
             }
 
-            DebugIMAP(friendlyThreat, 0.01f, 750);
+            DebugIMAP(enemyProx, 0.01f, 750);
         }
 
       private:
