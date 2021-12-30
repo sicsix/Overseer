@@ -5,41 +5,55 @@
 #ifndef OVERSEER_WASM_SRC_SYSTEMS_INFLUENCE_THREATINFLUENCE_H_
 #define OVERSEER_WASM_SRC_SYSTEMS_INFLUENCE_THREATINFLUENCE_H_
 #include "components/Components.h"
-#include "core/Pathcoster.h"
+#include "core/MovementCoster.h"
 #include "core/LineOfSight.h"
 
 namespace Overseer::Systems::Influence
 {
-    static void CalculateThreatInfluence(CreepThreatIMAP&     threatIMAP,
-                                         Core::LineOfSight& lineOfSight,
-                                         Threat               threat,
-                                         int*                 costs)
+    struct ThreatInfluence
     {
-        // TODO threat should include hitpoints
+      public:
+        static void Calculate(CreepThreatIMAP&   threatIMAP,
+                              Core::LineOfSight& lineOfSight,
+                              Threat&            threat,
+                              CreepMovementMap&  creepMovementMap)
+        {
+            // TODO threat should include hitpoints
+            // Attack threat should also depend on ability to move, with no move ability the radius can be 1
+            // Is heal a threat? or just an indirect threat? SHould it be included in threat influence?
+            if (threat.AttackDamage > 0)
+                SetAttackThreat(threatIMAP, threat, creepMovementMap);
+            else
+                memset(threatIMAP.Influence, 0, sizeof(float) * INFLUENCE_THREAT_SIZE);
 
-        // Three types of threat exist -> Heal, Attack, RangedAttack
-        // Each should have a different splat and sum them together
-        // Do we need to do pathfinding to determine attack threat?
-        // Do we need to do visibility checks to determine ranged attack threat?
-        // Is heal threat just a constant that ignores vis, but keeps terrain?
-        // Maybe set some constants to determine what each part is worth threat wise
-        // Attack threat should also depend on ability to move, with no move ability the radius can be 1
+            if (threat.RangedAttackDamage > 0 || threat.RangedHealRate > 0)
+            {
+                int los[INFLUENCE_THREAT_SIZE];
+                lineOfSight.CalculateLOS(threatIMAP, los);
 
-        // Is heal a threat? or just an indirect threat? SHould it be included in threat influence?
+                if (threat.RangedAttackDamage > 0)
+                    AddRangedAttackThreat(threatIMAP, threat, los);
 
-        if (threat.AttackDamage > 0)
+                if (threat.RangedHealRate > 0)
+                    AddRangedHealThreat(threatIMAP, threat, los);
+            }
+        }
+
+      private:
+        static void SetAttackThreat(CreepThreatIMAP& threatIMAP, Threat& threat, CreepMovementMap& creepMovementMap)
         {
             int mapIndex = threatIMAP.MapStartIndex;
             int infIndex = threatIMAP.InfStartIndex;
+            int movIndex = ;
 
             // printf("CalculateAttackThreatInfluence: { ");
             for (int y = threatIMAP.InfStart.y; y < threatIMAP.InfEnd.y; ++y)
             {
                 for (int x = threatIMAP.InfStart.x; x < threatIMAP.InfEnd.x; ++x)
                 {
-                    int   tileCost                 = min(costs[infIndex], 7);
-                    float distBase                 = CalculateLinearLookup(tileCost);
-                    float inf                      = distBase * threat.AttackDamage * INFLUENCE_ATTACK_THREAT_MULT;
+                    int   moveCost = min(creepMovementMap.Costs[movIndex] * threat.TicksPerMove, INFLUENCE_THREAT_RADIUS);
+                    float distBase = CalculateInverseLinearInfluence(1.0f, moveCost, INFLUENCE_THREAT_RADIUS);
+                    float inf      = distBase * threat.AttackDamage * INFLUENCE_THREAT_ATTACK_FACTOR;
                     threatIMAP.Influence[infIndex] = inf;
                     // printf("{ MapIndex: %i, InfIndex: %i, Cost: %i, DistBase: %f, Inf: %f }, ",
                     //        mapIndex,
@@ -49,20 +63,16 @@ namespace Overseer::Systems::Influence
                     //        inf);
                     mapIndex++;
                     infIndex++;
+                    movIndex++;
                 }
                 mapIndex += threatIMAP.MapYIncrement;
                 infIndex += threatIMAP.InfYIncrement;
+                movIndex += movYIncrement;
             }
             // printf("} \n");
         }
-        else
-            memset(threatIMAP.Influence, 0, sizeof(float) * INFLUENCE_SIZE);
 
-        if (threat.RangedAttackDamage > 0 || threat.RangedHealRate > 0)
-            lineOfSight.CalculateLOS(threatIMAP, costs);
-
-        // Calcalute RANGED threat
-        if (threat.RangedAttackDamage > 0)
+        static void AddRangedAttackThreat(CreepThreatIMAP& threatIMAP, Threat& threat, int* los)
         {
             int mapIndex = threatIMAP.MapStartIndex;
             int infIndex = threatIMAP.InfStartIndex;
@@ -74,9 +84,9 @@ namespace Overseer::Systems::Influence
             {
                 for (int x = threatIMAP.InfStart.x; x < threatIMAP.InfEnd.x; ++x)
                 {
-                    int   inLos      = costs[infIndex];
-                    float threatBase = inLos ? InfluencePrecomputes::RangedAttack4Falloff[infIndex] : 0;
-                    float inf        = threatBase * threat.RangedAttackDamage * INFLUENCE_RANGED_ATTACK_THREAT_MULT;
+                    int   inLos      = los[infIndex];
+                    float threatBase = inLos ? InfluencePrecomputes::ThreatRangedAttack4Falloff[infIndex] : 0;
+                    float inf        = threatBase * threat.RangedAttackDamage * INFLUENCE_THREAT_RANGED_ATTACK_FACTOR;
                     threatIMAP.Influence[infIndex] += inf;
                     // if (inf > 0)
                     // {
@@ -96,7 +106,7 @@ namespace Overseer::Systems::Influence
             // printf("} \n");
         }
 
-        if (threat.RangedHealRate > 0)
+        static void AddRangedHealThreat(CreepThreatIMAP& threatIMAP, Threat& threat, int* los)
         {
             int mapIndex = threatIMAP.MapStartIndex;
             int infIndex = threatIMAP.InfStartIndex;
@@ -108,9 +118,9 @@ namespace Overseer::Systems::Influence
             {
                 for (int x = threatIMAP.InfStart.x; x < threatIMAP.InfEnd.x; ++x)
                 {
-                    int   inLos      = costs[infIndex];
-                    float threatBase = inLos ? InfluencePrecomputes::RangedAttack4Falloff[infIndex] : 0;
-                    float inf        = threatBase * threat.RangedHealRate * INFLUENCE_RANGED_HEAL_THREAT_MULT;
+                    int   inLos      = los[infIndex];
+                    float threatBase = inLos ? InfluencePrecomputes::ThreatRangedAttack4Falloff[infIndex] : 0;
+                    float inf        = threatBase * threat.RangedHealRate * INFLUENCE_THREAT_RANGED_HEAL_FACTOR;
                     threatIMAP.Influence[infIndex] += inf;
                     // if (inf > 0)
                     // {
@@ -128,6 +138,6 @@ namespace Overseer::Systems::Influence
                 infIndex += threatIMAP.InfYIncrement;
             }
         }
-    }
+    };
 } // namespace Overseer::Systems::Influence
 #endif // OVERSEER_WASM_SRC_SYSTEMS_INFLUENCE_THREATINFLUENCE_H_

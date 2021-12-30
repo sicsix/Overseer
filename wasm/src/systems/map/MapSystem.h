@@ -9,7 +9,7 @@
 #include "Signals.h"
 #include "core/Navigation.h"
 #include "core/Pathfinder.h"
-#include "core/Pathcoster.h"
+#include "core/MovementCoster.h"
 #include "core/LineOfSight.h"
 
 namespace Overseer::Systems
@@ -24,9 +24,13 @@ namespace Overseer::Systems
 
         void Update(entt::registry& registry) override
         {
+            auto navMap = registry.ctx<Core::NavMap>();
+            memcpy(navMap.Map, BaseNavMap.Map, sizeof(int) * MAP_SIZE);
         }
 
       private:
+        Core::NavMap BaseNavMap;
+
         void TerrainMapImported(entt::registry& registry)
         {
             printf("[WASM] Building navigation map...\n");
@@ -40,14 +44,18 @@ namespace Overseer::Systems
                 navCosts[i] = Core::Navigation::TerrainCost[terrainMap.Map[i]];
             }
 
-            auto navMap     = Core::NavMap(navCosts);
-            auto pathfinder = Core::Pathfinder(navMap);
-            auto pathcoster = Core::Pathcoster(navMap);
+            int* baseNavCosts = new int[MAP_SIZE];
+            memcpy(baseNavCosts, navCosts, sizeof(int) * MAP_SIZE);
+            BaseNavMap = Core::NavMap(baseNavCosts);
+
+            auto navMap      = Core::NavMap(navCosts);
+            auto pathfinder  = Core::Pathfinder(navMap);
+            auto pathcoster  = Core::MovementCoster(navMap);
             auto lineOfSight = Core::LineOfSight(terrainMap);
 
             registry.set<Core::NavMap>(navMap);
             registry.set<Core::Pathfinder>(pathfinder);
-            registry.set<Core::Pathcoster>(pathcoster);
+            registry.set<Core::MovementCoster>(pathcoster);
             registry.set<Core::LineOfSight>(lineOfSight);
         }
     };

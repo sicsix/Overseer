@@ -97,6 +97,7 @@ namespace Overseer::Imports
                     registry.emplace<Path>(entity);
                 }
 
+                registry.emplace<CreepMovementMap>(entity);
                 registry.emplace<CreepThreatIMAP>(entity);
                 registry.emplace<CreepProxIMAP>(entity);
             }

@@ -130,16 +130,16 @@ namespace Overseer::Core
         return int2(2 * tile.Column - 1, 2 * tile.RowDepth);
     }
 
-    void LineOfSight::CalculateLOS(CreepThreatIMAP& threatIMAP, int* vision)
+    void LineOfSight::CalculateLOS(CreepThreatIMAP& threatIMAP, int* los)
     {
-        memset(vision, 0, sizeof(int) * INFLUENCE_SIZE);
+        memset(los, 0, sizeof(int) * INFLUENCE_THREAT_SIZE);
 
-        int infStartIndex     = PosToIndex(INFLUENCE_CENTER, INFLUENCE_WIDTH);
-        vision[infStartIndex] = 1;
+        int infStartIndex  = PosToIndex(INFLUENCE_THREAT_CENTER, INFLUENCE_THREAT_WIDTH);
+        los[infStartIndex] = 1;
 
         // printf("Calculating LOS...\n");
 
-        Row rows[INFLUENCE_WIDTH * 8]; // More than needed?
+        Row rows[INFLUENCE_THREAT_WIDTH * 8]; // More than needed?
         int currRowIndex = 0;
         for (int i = 1; i < 9; i += 2)
         {
@@ -169,19 +169,14 @@ namespace Overseer::Core
                     auto terrain    = (Terrain)TerrainMap.Map[worldIndex];
 
                     // printf(
-                    //     "        Tile: { Column: %i, Row Depth %i}    WorldPos: { %i, %i }    WorldIndex: %i    Terrain: %i\n",
-                    //     tile.Column,
-                    //     tile.RowDepth,
-                    //     worldPos.x,
-                    //     worldPos.y,
-                    //     worldIndex,
-                    //     terrain);
+                    //     "        Tile: { Column: %i, Row Depth %i}    WorldPos: { %i, %i }    WorldIndex: %i Terrain:
+                    //     %i\n", tile.Column, tile.RowDepth, worldPos.x, worldPos.y, worldIndex, terrain);
 
                     if (IsSymmetric(row, tile) && IsFloor(terrain))
                     {
-                        auto infPos      = worldPos - (threatIMAP.WorldCenter - INFLUENCE_RADIUS);
-                        auto infIndex    = PosToIndex(infPos, INFLUENCE_WIDTH);
-                        vision[infIndex] = 1;
+                        auto infPos   = worldPos - (threatIMAP.WorldCenter - INFLUENCE_THREAT_RADIUS);
+                        auto infIndex = PosToIndex(infPos, INFLUENCE_THREAT_WIDTH);
+                        los[infIndex] = 1;
                     }
 
                     if (IsWall(prevTerrain) && IsFloor(terrain))
@@ -193,31 +188,26 @@ namespace Overseer::Core
                     }
                     if (IsFloor(prevTerrain) && IsWall(terrain))
                     {
-                        if (row.Depth < INFLUENCE_RADIUS)
+                        if (row.Depth < INFLUENCE_THREAT_RADIUS)
                         {
                             int  depth            = row.Depth + 1;
                             int2 endSlopeFraction = Slope(tile);
                             // printf(
-                            //     "            Adding row due to block - Depth: %i    StartSlopeFraction: { %i, %i }    EndSlopeFraction: { %i, %i }\n",
-                            //     depth,
-                            //     startSlopeFraction.x,
-                            //     startSlopeFraction.y,
+                            //     "            Adding row due to block - Depth: %i    StartSlopeFraction: { %i, %i }
+                            //     EndSlopeFraction: { %i, %i }\n", depth, startSlopeFraction.x, startSlopeFraction.y,
                             //     endSlopeFraction.x,
                             //     endSlopeFraction.y);
-                            rows[currRowIndex++] = Row(depth, startSlopeFraction, endSlopeFraction);
+                            rows[currRowIndex++]  = Row(depth, startSlopeFraction, endSlopeFraction);
                         }
                     }
 
                     prevTerrain = terrain;
                 }
-                if (IsFloor(prevTerrain) && row.Depth < INFLUENCE_RADIUS)
+                if (IsFloor(prevTerrain) && row.Depth < INFLUENCE_THREAT_RADIUS)
                 {
                     // printf(
-                    //     "    Adding next row - Depth: %i    StartSlopeFraction: { %i, %i }    EndSlopeFraction: { %i, %i }\n",
-                    //     row.Depth + 1,
-                    //     startSlopeFraction.x,
-                    //     startSlopeFraction.y,
-                    //     row.EndSlopeFraction.x,
+                    //     "    Adding next row - Depth: %i    StartSlopeFraction: { %i, %i }    EndSlopeFraction: { %i,
+                    //     %i }\n", row.Depth + 1, startSlopeFraction.x, startSlopeFraction.y, row.EndSlopeFraction.x,
                     //     row.EndSlopeFraction.y);
                     rows[currRowIndex++] = Row(row.Depth + 1, startSlopeFraction, row.EndSlopeFraction);
                 }

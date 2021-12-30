@@ -181,15 +181,21 @@ namespace Overseer::Components
         int2   InfEnd;
         int    InfStartIndex;
         int    InfYIncrement;
-        float* Influence = new float[INFLUENCE_SIZE];
     };
 
     struct CreepProxIMAP : CreepIMAP
     {
+        float* Influence = new float[INFLUENCE_PROX_SIZE];
     };
 
     struct CreepThreatIMAP : CreepIMAP
     {
+        float* Influence = new float[INFLUENCE_THREAT_SIZE];
+    };
+
+    struct CreepMovementMap
+    {
+        int* Costs = new int[INTEREST_SIZE];
     };
 
 } // namespace Overseer::Components
