@@ -48,14 +48,14 @@ namespace Overseer::Systems
             memcpy(baseNavCosts, navCosts, sizeof(int) * MAP_SIZE);
             BaseNavMap = Core::NavMap(baseNavCosts);
 
-            auto navMap      = Core::NavMap(navCosts);
-            auto pathfinder  = Core::Pathfinder(navMap);
-            auto pathcoster  = Core::MovementCoster(navMap);
-            auto lineOfSight = Core::LineOfSight(terrainMap);
+            auto navMap         = Core::NavMap(navCosts);
+            auto pathfinder     = Core::Pathfinder(navMap);
+            auto movementCoster = Core::MovementCoster(navMap);
+            auto lineOfSight    = Core::LineOfSight(terrainMap);
 
             registry.set<Core::NavMap>(navMap);
             registry.set<Core::Pathfinder>(pathfinder);
-            registry.set<Core::MovementCoster>(pathcoster);
+            registry.set<Core::MovementCoster>(movementCoster);
             registry.set<Core::LineOfSight>(lineOfSight);
         }
     };

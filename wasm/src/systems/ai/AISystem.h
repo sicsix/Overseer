@@ -35,7 +35,7 @@ namespace Overseer::Systems::AI
             auto friendlyThreat = registry.ctx<Core::FriendlyThreatIMAP>();
             auto enemyProx      = registry.ctx<Core::EnemyProxIMAP>();
             auto enemyThreat    = registry.ctx<Core::EnemyThreatIMAP>();
-            auto pathfinder = registry.ctx<Core::Pathfinder>();
+            auto pathfinder     = registry.ctx<Core::Pathfinder>();
 
             auto friendlyCreeps =
                 registry.view<My, Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat, Path>(
@@ -64,14 +64,19 @@ namespace Overseer::Systems::AI
                     bestLeader         = entity;
                 }
 
+                auto squadEntity = registry.create((entt::entity)100000);
+
                 auto squad = Squad();
                 for (auto entity : friendlyCreeps)
                 {
-                    if (entity != bestLeader)
-                        squad.Grunts[squad.Size++] = entity;
+                    if (entity == bestLeader)
+                        continue;
+
+                    squad.Grunts[squad.Size++] = entity;
+                    registry.emplace<SquadRef>(entity, SquadRef(squadEntity, bestLeader));
                 }
 
-                auto squadEntity = registry.create((entt::entity)100000);
+
                 registry.emplace<Squad>(squadEntity, squad);
                 registry.emplace<SquadLeader>(bestLeader, SquadLeader(squadEntity));
                 printf("Selected %i...\n", bestLeader);
@@ -97,46 +102,56 @@ namespace Overseer::Systems::AI
                 }
             }
 
-            auto grunts = registry.view<My, Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat, Path>(
+            auto grunts = registry.view<My, SquadRef, Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat, Path>(
                 entt::exclude<SquadLeader>);
 
-            for (auto entity : friendlyCreeps)
+            for (auto entity : grunts)
             {
-                // if (entity != (entt::entity)10)
-                //     continue;
+                if (entity != (entt::entity)10)
+                    continue;
 
-                auto [pos, proxIMAP, threatIMAP, movementMap, threat, path] = friendlyCreeps.get(entity);
+                auto [squadRef, pos, proxIMAP, threatIMAP, movementMap, threat, path] = grunts.get(entity);
+
+                auto squadLeader = squadRef.SquadLeader;
+                auto squadLeaderMovementMap = registry.get<CreepMovementMap>(squadLeader);
 
                 // TODO get SL movement map
                 auto interestMap = InterestMap(pos.Val,
                                                proxIMAP,
                                                threatIMAP,
                                                movementMap,
-                                               movementMap,
+                                               squadLeaderMovementMap,
                                                friendlyProx,
                                                friendlyThreat,
                                                enemyProx,
                                                enemyThreat,
                                                navMap);
 
-                interestMap.Add(InfluenceType::FriendlyProx, 1.0f);
-                interestMap.Add(InfluenceType::MyProx, -1.0f);
-                interestMap.NormaliseAndInvert();
-                interestMap.ApplyInterestTemplate(InterestType::MovementMap);
+                printf("Interest 1");
+                // interestMap.Add(InfluenceType::FriendlyProx, 1.0f);
+                // interestMap.Add(InfluenceType::MyProx, -1.0f);
+                // interestMap.NormaliseAndInvert();
+                // interestMap.ApplyInterestTemplate(InterestType::MovementMap);
+                // int2 target = interestMap.GetHighestPos();
+
+                interestMap.Add(InfluenceType::SquadLeaderMovementMap, 2.0f);
+                printf("Interest 2");
+                // interestMap.ApplyInterestTemplate(InterestType::MovementMap);
                 int2 target = interestMap.GetHighestPos();
 
-                // DebugInterest(interestMap, 0.01f, INTEREST_SIZE);
+                if (entity == (entt::entity)10)
+                    DebugInterest(interestMap, 0.01f, INTEREST_SIZE);
 
                 // TODO HANDLE NOT RETURNING A REAL TARGET? OTHERWISE WE CRASH! IE WITH NO NEARBY CREEPS IT JUS DIES
 
                 // printf("6: Pos: { %i, %i }    TARGET: { %i, %i }\n", pos.Val.x, pos.Val.y, target.x, target.y);
-                if (target != pos.Val)
-                {
-                    Core::MovementCoster::GetPath(
-                        PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(target, MAP_WIDTH), movementMap, path);
-                    auto direction = GetDirection(pos.Val, path.Val[0]);
-                    CommandHandler::Add(Move((double)entity, (double)direction));
-                }
+                // if (target != pos.Val)
+                // {
+                //     Core::MovementCoster::GetPath(
+                //         PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(target, MAP_WIDTH), movementMap, path);
+                //     auto direction = GetDirection(pos.Val, path.Val[0]);
+                //     CommandHandler::Add(Move((double)entity, (double)direction));
+                // }
             }
         }
 

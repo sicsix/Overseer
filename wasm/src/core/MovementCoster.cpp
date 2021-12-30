@@ -17,9 +17,12 @@ namespace Overseer::Core
 
     void MovementCoster::Update(CreepMovementMap& creepMovementMap)
     {
+        printf("Coster 1\n");
         memcpy(creepMovementMap.Nodes, BlankNodeSet, sizeof(Node) * (INTEREST_SIZE + 1));
+        printf("Coster 2\n");
         Update(NavigationMap, creepMovementMap, PriorityQueue);
         PriorityQueue.Clear();
+        printf("Coster 3\n");
     }
 
     void MovementCoster::Update(NavMap&                              navMap,
@@ -90,18 +93,23 @@ namespace Overseer::Core
         //     mapIndex,
         //     infIndex);
 
+        printf("Coster 22\n");
         // TODO this is a little clumsy given the repurposing of movementcoster, this could probably be better managed in the threat calculations by checking dist == minDist
         // TODO original purpose of this code was to make sure the threat level adjacent to a creep was the maximum value
         for (int y = centerStart.y; y < centerEnd.y; ++y)
         {
             for (int x = centerStart.x; x < centerEnd.x; ++x)
             {
+                printf("Coster 221: MapIndex: %i   InfIndex: %i\n", mapIndex, infIndex);
                 if (navMap.Map[mapIndex] != INT_MAXVALUE)
                 {
+                    printf("Coster 222\n");
                     movementMap.Nodes[infIndex] = Node(centerIndex, 0);
 
+                    printf("Coster 223\n");
                     if (mapIndex != centerIndex)
                         openSet.Push(0, QueueNode(mapIndex, 0));
+                    printf("Coster 224\n");
                 }
                 mapIndex++;
                 infIndex++;
@@ -110,6 +118,7 @@ namespace Overseer::Core
             infIndex += infYIncrement;
         }
 
+        printf("Coster 23\n");
         while (!openSet.Empty())
         {
             const QueueNode current = openSet.Pop();
@@ -119,6 +128,8 @@ namespace Overseer::Core
             int  currInfIndex = PosToIndex(currInfPos, INTEREST_WIDTH);
 
             auto visitedNode = movementMap.Nodes[currInfIndex];
+
+            printf("Coster 24\n");
 
             if (visitedNode.Cost < current.CostSoFar)
                 continue;

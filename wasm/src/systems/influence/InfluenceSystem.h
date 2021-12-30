@@ -44,6 +44,8 @@ namespace Overseer::Systems::Influence
             ClearMap(enemyProx);
             ClearMap(enemyThreat);
 
+            printf("Inf 1\n");
+
             auto friendlyCreeps = registry.view<My, Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat>();
             // int  ranX           = 0;
             for (auto entity : friendlyCreeps)
@@ -51,22 +53,35 @@ namespace Overseer::Systems::Influence
                 // if (entity != (entt::entity)10)
                 //     continue;
                 // ranX++;
+                printf("Inf Entity: %i\n", entity);
 
                 auto [pos, proxIMAP, threatIMAP, creepMovementMap, threat] = friendlyCreeps.get(entity);
 
                 // printf("Entity: %i    Pos: { %i, %i }\n", entity, pos.Val.x, pos.Val.y);
+                printf("Inf 2\n");
 
                 proxIMAP.ClampAndSetBounds(pos.Val, INFLUENCE_PROX_RADIUS, INFLUENCE_PROX_WIDTH);
                 threatIMAP.ClampAndSetBounds(pos.Val, INFLUENCE_THREAT_RADIUS, INFLUENCE_THREAT_WIDTH);
                 creepMovementMap.ClampAndSetBounds(pos.Val, INTEREST_RADIUS, INTEREST_WIDTH);
+
+                printf("Inf 3\n");
                 movementCoster.Update(creepMovementMap);
 
-                ProximityInfluence::Calculate(proxIMAP, navMap);
-                ThreatInfluence::Calculate(threatIMAP, lineOfSight, threat, creepMovementMap);
+                printf("Inf 4\n");
 
+                ProximityInfluence::Calculate(proxIMAP, navMap);
+                printf("Inf 5\n");
+                ThreatInfluence::Calculate(threatIMAP, lineOfSight, threat, creepMovementMap);
+                printf("Inf 6\n");
+
+                printf("Inf 7\n");
                 AddProxInfluence(friendlyProx, proxIMAP);
+
+                printf("Inf 8\n");
                 AddThreatInfluence(friendlyThreat, threatIMAP);
             }
+
+            printf("Inf 2\n");
 
             auto enemyCreeps =
                 registry.view<Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat>(entt::exclude<My>);
@@ -88,6 +103,8 @@ namespace Overseer::Systems::Influence
                 AddProxInfluence(enemyProx, proxIMAP);
                 AddThreatInfluence(enemyThreat, threatIMAP);
             }
+
+            printf("Inf 3\n");
 
             // DebugIMAP(friendlyThreat, 0.01f, 750);
         }

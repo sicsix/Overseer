@@ -210,6 +210,16 @@ namespace Overseer::Components
         {
         }
     };
+
+    struct SquadRef
+    {
+        entt::entity Squad;
+        entt::entity SquadLeader;
+
+        SquadRef(entt::entity squad, entt::entity squadLeader): Squad(squad), SquadLeader(squadLeader)
+        {
+        }
+    };
 } // namespace Overseer::Components
 
 using namespace Overseer::Components;

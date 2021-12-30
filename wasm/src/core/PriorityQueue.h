@@ -51,7 +51,9 @@ namespace Overseer::Core
 
         inline void Push(int expectedCost, T node)
         {
+            printf("HI1\n");
             this->emplace(expectedCost, node);
+            printf("HI2\n");
         }
 
         T Pop()

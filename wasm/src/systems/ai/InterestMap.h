@@ -257,10 +257,10 @@ namespace Overseer::Systems::AI
             {
                 for (int x = LocalStart.x; x < LocalEnd.x; ++x)
                 {
-
                     float value = Interest[localIndex];
                     // printf("{ WorldIndex: %i, LocalIndex: %i, Value: %f }, ", worldIndex, localIndex, value);
-                    if (value > max) // TODO WHEN SETTING THIS TO <= WE FAIL ON THE PATHFINDING, IT SHOULD STILL WORK AS RANGES ARE THE SAME, IT CHOOSES BOTTOM LEFT POSITION AND NO PATH CAN BE FOUND, INVESTIGATE
+                    if (value >
+                        max) // TODO WHEN SETTING THIS TO <= WE FAIL ON THE PATHFINDING, IT SHOULD STILL WORK AS RANGES ARE THE SAME, IT CHOOSES BOTTOM LEFT POSITION AND NO PATH CAN BE FOUND, INVESTIGATE
                     {
                         max      = value;
                         maxIndex = worldIndex;
@@ -298,7 +298,7 @@ namespace Overseer::Systems::AI
             // }
             // // printf(" }\n");
 
-            int2 worldPos =  IndexToPos(maxIndex, MAP_WIDTH);
+            int2 worldPos = IndexToPos(maxIndex, MAP_WIDTH);
 
             // printf("HIGHEST VAL: %f\n", max);
 
@@ -437,23 +437,36 @@ namespace Overseer::Systems::AI
 
         void CopyFromMovementMap(CreepMovementMap& movementMap, float* influence)
         {
-            // printf("CopyFromMovementMap: { ");
-            for (int i = 0; i < INTEREST_SIZE; ++i)
+            int interestIndex = PosToIndex(movementMap.WorldStart - WorldStart, INTEREST_WIDTH) + LocalStartIndex;
+            int movementIndex = movementMap.LocalStartIndex;
+
+            int width      = movementMap.LocalEnd.x - movementMap.LocalStart.x;
+            int yIncrement = INTEREST_WIDTH - width;
+
+            printf("CopyFromMovementMap: { ");
+            for (int y = movementMap.LocalStart.y; y < movementMap.LocalEnd.y; ++y)
             {
-                int cost     = movementMap.Nodes[i].Cost;
-                // Turns 0 -> distance into 1 -> 0
-                float inf = CalculateInverseLinearInfluence(1.0f, cost, INTEREST_WIDTH);
-                // printf("{ LocalIndex: %i, Inf: %f }, ", i, inf);
-                influence[i] = inf;
+                for (int x = movementMap.LocalStart.x; x < movementMap.LocalEnd.x; ++x)
+                {
+                    int   cost   = movementMap.Nodes[movementIndex].Cost;
+                    float inf    = CalculateInverseLinearInfluence(1.0f, cost, INTEREST_WIDTH);
+                    printf("{ InterestIndex: %i, MovementIndex: %i, Inf: %f }, ", interestIndex, movementIndex, inf);
+                    influence[interestIndex] = inf;
+                    interestIndex++;
+                    movementIndex++;
+                }
+                interestIndex += yIncrement;
+                movementIndex += yIncrement;
             }
-            // printf("} \n");
+            printf("} \n");
         }
 
         InterestTemplate& GetInterestTemplate(InterestType interestType, InterestRange range)
         {
             InterestTemplate& temp = InterestTemplates[(int)interestType][(int)range - 1];
             if (!temp.Created)
-                InterestTemplates[(int)interestType][(int)range - 1] = CreateInterestTemplate(interestType, range, temp);
+                InterestTemplates[(int)interestType][(int)range - 1] =
+                    CreateInterestTemplate(interestType, range, temp);
             return temp;
         }
 
@@ -469,7 +482,7 @@ namespace Overseer::Systems::AI
                     break;
                 case InterestType::MovementMap:
                     if ((int)range == INTEREST_RADIUS)
-                        CopyFromMovementMap(MyMovementMap, temp.Influence);
+                        CreateMovementMapTemplate(MyMovementMap, temp.Influence);
                     else
                         CreateMovementMapTemplate(MyMovementMap, temp.Influence, range);
                     break;
@@ -506,6 +519,16 @@ namespace Overseer::Systems::AI
                 localIndex += localYIncrement;
             }
             // printf("} \n");
+        }
+
+        void CreateMovementMapTemplate(CreepMovementMap& movementMap, float* influence)
+        {
+            for (int i = 0; i < INTEREST_SIZE; ++i)
+            {
+                int cost     = movementMap.Nodes[i].Cost;
+                // Turns 0 -> distance into 1 -> 0
+                influence[i] = CalculateInverseLinearInfluence(1.0f, cost, INTEREST_WIDTH);
+            }
         }
 
         void CreateMovementMapTemplate(CreepMovementMap& movementMap, float* influence, InterestRange range)
