@@ -239,37 +239,66 @@ namespace Overseer::Systems::AI
 
         int2 GetHighestPos()
         {
+            // TODO re introduce random
             int   offset   = (rand() % INTEREST_SIZE);
             // printf("Offset: %i\n", offset);
             float max      = std::numeric_limits<float>::min();
             int   maxIndex = -1;
 
-            // printf("{ ");
-            for (int i = offset; i < INTEREST_SIZE; ++i)
-            {
-                float value = Interest[i];
-                // printf("{ Index: %i, Value: %f }, ", i, value);
-                if (value <= max)
-                    continue;
-                max      = value;
-                maxIndex = i;
-            }
-            // printf(" }\n");
+            int worldIndex = WorldStartIndex;
+            int localIndex = LocalStartIndex;
 
-            // printf("{ ");
-            for (int i = 0; i < offset; ++i)
-            {
-                float value = Interest[i];
-                // printf("{Index: %i, Value: %f }, ", i, value);
-                if (value <= max)
-                    continue;
-                max      = value;
-                maxIndex = i;
-            }
-            // printf(" }\n");
+            int width           = LocalEnd.x - LocalStart.x;
+            int worldYIncrement = MAP_WIDTH - width;
+            int localYIncrement = INTEREST_WIDTH - width;
 
-            int2 localPos = IndexToPos(maxIndex, INTEREST_WIDTH);
-            int2 worldPos = WorldStart + localPos;
+            // printf("GetHighestPos: { ");
+            for (int y = LocalStart.y; y < LocalEnd.y; ++y)
+            {
+                for (int x = LocalStart.x; x < LocalEnd.x; ++x)
+                {
+
+                    float value = Interest[localIndex];
+                    // printf("{ WorldIndex: %i, LocalIndex: %i, Value: %f }, ", worldIndex, localIndex, value);
+                    if (value > max) // TODO WHEN SETTING THIS TO <= WE FAIL ON THE PATHFINDING, IT SHOULD STILL WORK AS RANGES ARE THE SAME, IT CHOOSES BOTTOM LEFT POSITION AND NO PATH CAN BE FOUND, INVESTIGATE
+                    {
+                        max      = value;
+                        maxIndex = worldIndex;
+                    }
+
+                    worldIndex++;
+                    localIndex++;
+                }
+                worldIndex += worldYIncrement;
+                localIndex += localYIncrement;
+            }
+            // printf("} \n");
+
+            // // printf("{ ");
+            // for (int i = offset; i < INTEREST_SIZE; ++i)
+            // {
+            //     float value = Interest[i];
+            //     // printf("{ Index: %i, Value: %f }, ", i, value);
+            //     if (value <= max)
+            //         continue;
+            //     max      = value;
+            //     maxIndex = i;
+            // }
+            // // printf(" }\n");
+            //
+            // // printf("{ ");
+            // for (int i = 0; i < offset; ++i)
+            // {
+            //     float value = Interest[i];
+            //     // printf("{Index: %i, Value: %f }, ", i, value);
+            //     if (value <= max)
+            //         continue;
+            //     max      = value;
+            //     maxIndex = i;
+            // }
+            // // printf(" }\n");
+
+            int2 worldPos =  IndexToPos(maxIndex, MAP_WIDTH);
 
             // printf("HIGHEST VAL: %f\n", max);
 
@@ -408,6 +437,7 @@ namespace Overseer::Systems::AI
 
         void CopyFromMovementMap(CreepMovementMap& movementMap, float* influence)
         {
+            // TODO will this cause issues if off map?
             for (int i = 0; i < INTEREST_SIZE; ++i)
             {
                 int cost     = movementMap.Nodes[i].Cost;

@@ -35,7 +35,7 @@ namespace Overseer::Systems::AI
 
             for (auto entity : friendlyCreeps)
             {
-                // if (entity != (entt::entity)16)
+                // if (entity != (entt::entity)10)
                 //     continue;
 
                 auto [pos, proxIMAP, threatIMAP, movementMap, threat, path] = friendlyCreeps.get(entity);
@@ -58,12 +58,13 @@ namespace Overseer::Systems::AI
                 interestMap.ApplyInterestTemplate(InterestType::Proximity);
                 int2 target = interestMap.GetHighestPos();
                 // TODO highest pos seems to be returning values outside of range? Check northmost Creep 10
+                // target      = int2(8, 10);
 
-                DebugInterest(interestMap, 0.01f, INTEREST_SIZE);
+                // DebugInterest(interestMap, 0.01f, INTEREST_SIZE);
 
                 // TODO HANDLE NOT RETURNING A REAL TARGET? OTHERWISE WE CRASH! IE WITH NO NEARBY CREEPS IT JUS DIES
 
-                printf("6: Pos: { %i, %i }    TARGET: { %i, %i }\n", pos.Val.x, pos.Val.y, target.x, target.y);
+                // printf("6: Pos: { %i, %i }    TARGET: { %i, %i }\n", pos.Val.x, pos.Val.y, target.x, target.y);
                 // target = int2(3, 3);
                 Core::MovementCoster::GetPath(
                     PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(target, MAP_WIDTH), movementMap, path);
@@ -75,7 +76,6 @@ namespace Overseer::Systems::AI
         }
 
       private:
-
         void DebugInterest(InterestMap interestMap, float minVal, int maxCount)
         {
             int worldIndex = interestMap.WorldStartIndex;
@@ -91,7 +91,7 @@ namespace Overseer::Systems::AI
                 for (int x = interestMap.LocalStart.x; x < interestMap.LocalEnd.x; ++x)
                 {
                     float interest = interestMap.Interest[localIndex];
-                    auto pos = (double2)IndexToPos(worldIndex, MAP_WIDTH);
+                    auto  pos      = (double2)IndexToPos(worldIndex, MAP_WIDTH);
 
                     if (interest > minVal)
                     {

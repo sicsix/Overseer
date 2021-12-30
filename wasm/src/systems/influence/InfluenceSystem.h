@@ -50,7 +50,7 @@ namespace Overseer::Systems::Influence
             // int  ranX           = 0;
             for (auto entity : friendlyCreeps)
             {
-                // if (entity != (entt::entity)16)
+                // if (entity != (entt::entity)10)
                 //     continue;
                 // ranX++;
 

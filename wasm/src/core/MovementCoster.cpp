@@ -169,8 +169,8 @@ namespace Overseer::Core
         currentWorldIndexes      = clamp(currentWorldIndexes, 0, MAP_SIZE - 1);
 
         // printf(
-        //     "        CurrentWorldPostions: {{ %i, %i }, { %i, %i }, { %i, %i } { %i, %i }   IsPosInbounds: { %i, %i,
-        //     %i, %i }    CurrentWorldIndexes: { %i, %i, %i, %i }\n", currentWorldPositions.x.x,
+        //     "        CurrentWorldPostions: {{ %i, %i }, { %i, %i }, { %i, %i } { %i, %i }   IsPosInbounds: { %i, %i, %i, %i }    CurrentWorldIndexes: { %i, %i, %i, %i }\n",
+        //     currentWorldPositions.x.x,
         //     currentWorldPositions.y.x,
         //     currentWorldPositions.x.y,
         //     currentWorldPositions.y.y,
@@ -290,7 +290,7 @@ namespace Overseer::Core
             currentWorldPos               = IndexToPos(currentIndex, MAP_WIDTH);
             int currentLocalIndex = PosToIndex(WorldToLocal(currentWorldPos, movementMap.WorldStart), INTEREST_WIDTH) +
                                     movementMap.LocalStartIndex;
-            auto node = movementMap.Nodes[currentLocalIndex];
+            auto node    = movementMap.Nodes[currentLocalIndex];
             // printf("Path: %i    WorldIndex: %i    CameFrom: %i    CurrentLocalIndex: %i\n",
             //        pathIndex - 1,
             //        currentIndex,

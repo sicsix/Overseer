@@ -186,7 +186,7 @@ namespace Overseer::Core
         {
             reversePathArray[pathIndex++] = currentIndex;
             auto node                     = nodeSet[currentIndex];
-            printf("Path: %i    WorldIndex: %i    CameFrom: %i\n", pathIndex, currentIndex, node.CameFrom);
+            // printf("Path: %i    WorldIndex: %i    CameFrom: %i\n", pathIndex, currentIndex, node.CameFrom);
             currentIndex                  = node.CameFrom;
         } while (currentIndex != startIndex);
 
