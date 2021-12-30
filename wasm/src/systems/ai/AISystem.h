@@ -54,8 +54,8 @@ namespace Overseer::Systems::AI
 
                 interestMap.Add(InfluenceType::FriendlyProx, 1.0f);
                 interestMap.Add(InfluenceType::MyProx, -1.0f);
-                interestMap.Normalise();
-                interestMap.ApplyInterestTemplate(InterestType::Proximity);
+                interestMap.NormaliseAndInvert();
+                interestMap.ApplyInterestTemplate(InterestType::MovementMap);
                 int2 target = interestMap.GetHighestPos();
                 // TODO highest pos seems to be returning values outside of range? Check northmost Creep 10
                 // target      = int2(8, 10);
@@ -66,12 +66,16 @@ namespace Overseer::Systems::AI
 
                 // printf("6: Pos: { %i, %i }    TARGET: { %i, %i }\n", pos.Val.x, pos.Val.y, target.x, target.y);
                 // target = int2(3, 3);
-                Core::MovementCoster::GetPath(
-                    PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(target, MAP_WIDTH), movementMap, path);
+                if (target != pos.Val)
+                {
+                    Core::MovementCoster::GetPath(
+                        PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(target, MAP_WIDTH), movementMap, path);
+                    auto direction = GetDirection(pos.Val, path.Val[0]);
+                    CommandHandler::Add(Move((double)entity, (double)direction));
+                }
 
                 // TODO Should return no path if target == same, check path not zero length before doing below
-                auto direction = GetDirection(pos.Val, path.Val[0]);
-                CommandHandler::Add(Move((double)entity, (double)direction));
+
             }
         }
 

@@ -437,20 +437,23 @@ namespace Overseer::Systems::AI
 
         void CopyFromMovementMap(CreepMovementMap& movementMap, float* influence)
         {
-            // TODO will this cause issues if off map?
+            // printf("CopyFromMovementMap: { ");
             for (int i = 0; i < INTEREST_SIZE; ++i)
             {
                 int cost     = movementMap.Nodes[i].Cost;
                 // Turns 0 -> distance into 1 -> 0
-                influence[i] = CalculateInverseLinearInfluence(1.0f, cost, INTEREST_WIDTH);
+                float inf = CalculateInverseLinearInfluence(1.0f, cost, INTEREST_WIDTH);
+                // printf("{ LocalIndex: %i, Inf: %f }, ", i, inf);
+                influence[i] = inf;
             }
+            // printf("} \n");
         }
 
         InterestTemplate& GetInterestTemplate(InterestType interestType, InterestRange range)
         {
-            InterestTemplate& temp = InterestTemplates[(int)interestType][(int)range];
+            InterestTemplate& temp = InterestTemplates[(int)interestType][(int)range - 1];
             if (!temp.Created)
-                InterestTemplates[(int)interestType][(int)range] = CreateInterestTemplate(interestType, range, temp);
+                InterestTemplates[(int)interestType][(int)range - 1] = CreateInterestTemplate(interestType, range, temp);
             return temp;
         }
 

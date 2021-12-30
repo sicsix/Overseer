@@ -80,11 +80,8 @@ namespace Overseer::Core::Math
                 return Direction::BOTTOM;
             case 8:
                 return Direction::BOTTOM_RIGHT;
-            case 4:
-                printf("DEFAULTING TO TOP, SAME TILE\n");
-                return Direction::TOP;
         }
-        throw printf("INVALID DIRECTION\n");
+        throw printf("[WASM] ERROR: Invalid direction\n");
     }
 
     inline static int DistanceManhattan(int2& orig, int2& dest)
