@@ -62,7 +62,7 @@ export class CommandBuffer
             case CommandType.END:
             case CommandType.INVALID:
             default:
-                throw "Invalid CommandType";
+                throw "[JS] ERROR: Invalid CommandType";
         }
     }
 

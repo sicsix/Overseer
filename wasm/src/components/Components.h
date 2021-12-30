@@ -7,6 +7,7 @@
 #include "Includes.h"
 #include "core/Navigation.h"
 #include "core/Influence.h"
+#include "entt.hpp"
 
 namespace Overseer::Components
 {
@@ -187,6 +188,28 @@ namespace Overseer::Components
         Core::Node* Nodes = new Core::Node[INTEREST_SIZE + 1];
     };
 
+    struct Squad
+    {
+        int   Size;
+        int   TotalHP;
+        int   TotalRangedHealing;
+        int   TotalAttackDamage;
+        int   TotalRangedAttackDamage;
+        int   CalculatedThreat;
+        float AverageTicksPerMove;
+
+        entt::entity Leader;
+        entt::entity Grunts[MAX_SQUAD_SIZE];
+    };
+
+    struct SquadLeader
+    {
+        entt::entity Squad;
+
+        SquadLeader(entt::entity squad): Squad(squad)
+        {
+        }
+    };
 } // namespace Overseer::Components
 
 using namespace Overseer::Components;

@@ -13,8 +13,8 @@ export class ModuleManager
     {
         const opts: any = {};
         opts.print = opts.print || ((text: string) => console.log(text));
-        opts.printErr = opts.printErr || ((text: string) => console.log(`ERROR: ${text}`));
-        opts.onAbort = opts.onAbort || (() => console.log("[JS] WASM ABORTED"));
+        opts.printErr = opts.printErr || ((text: string) => console.log(`[JS] ERROR: ${text}`));
+        opts.onAbort = opts.onAbort || (() => console.log("[JS] FATAL: WASM ABORTED"));
         this.module = Module(opts);
 
         this.exportBuffer = new ExportBuffer(this.module);

@@ -22,6 +22,12 @@ namespace Overseer::Systems::AI
         {
         }
 
+        int CalculateThreatLevel(Threat& threat)
+        {
+            // TODO deadshit way of doing this and doesnt belong here
+            return threat.AttackDamage + threat.RangedAttackDamage + threat.HealRate;
+        }
+
         void Update(entt::registry& registry) override
         {
             auto navMap         = registry.ctx<Core::NavMap>();
@@ -29,9 +35,70 @@ namespace Overseer::Systems::AI
             auto friendlyThreat = registry.ctx<Core::FriendlyThreatIMAP>();
             auto enemyProx      = registry.ctx<Core::EnemyProxIMAP>();
             auto enemyThreat    = registry.ctx<Core::EnemyThreatIMAP>();
+            auto pathfinder = registry.ctx<Core::Pathfinder>();
 
             auto friendlyCreeps =
-                registry.view<My, Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat, Path>();
+                registry.view<My, Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat, Path>(
+                    entt::exclude<SquadLeader>);
+
+            auto squads = registry.view<Squad>();
+
+            if (squads.empty())
+            {
+                printf("Selecting a squad leader...\n");
+                entt::entity bestLeader = entt::entity();
+
+                int highestThreatLevel = std::numeric_limits<int>().min();
+                int creepCount         = 0;
+
+                for (auto entity : friendlyCreeps)
+                {
+                    auto threat      = friendlyCreeps.get<Threat>(entity);
+                    int  threatLevel = CalculateThreatLevel(threat);
+                    creepCount++;
+
+                    if (threatLevel < highestThreatLevel)
+                        continue;
+
+                    highestThreatLevel = threatLevel;
+                    bestLeader         = entity;
+                }
+
+                auto squad = Squad();
+                for (auto entity : friendlyCreeps)
+                {
+                    if (entity != bestLeader)
+                        squad.Grunts[squad.Size++] = entity;
+                }
+
+                auto squadEntity = registry.create((entt::entity)100000);
+                registry.emplace<Squad>(squadEntity, squad);
+                registry.emplace<SquadLeader>(bestLeader, SquadLeader(squadEntity));
+                printf("Selected %i...\n", bestLeader);
+            }
+
+            auto squadLeaders =
+                registry.view<My, SquadLeader, Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat, Path>();
+
+            for (auto entity : squadLeaders)
+            {
+                printf("Running squad leaders...\n");
+                auto [squadLeader, pos, proxIMAP, threatIMAP, movementMap, threat, path] = squadLeaders.get(entity);
+
+                auto goal = int2(90, 90);
+                pathfinder.FindPath(pos.Val, goal, path);
+
+                if (path.Val[0] != pos.Val)
+                {
+                    Core::MovementCoster::GetPath(
+                        PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(path.Val[0], MAP_WIDTH), movementMap, path);
+                    auto direction = GetDirection(pos.Val, path.Val[0]);
+                    CommandHandler::Add(Move((double)entity, (double)direction));
+                }
+            }
+
+            auto grunts = registry.view<My, Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat, Path>(
+                entt::exclude<SquadLeader>);
 
             for (auto entity : friendlyCreeps)
             {
@@ -57,15 +124,12 @@ namespace Overseer::Systems::AI
                 interestMap.NormaliseAndInvert();
                 interestMap.ApplyInterestTemplate(InterestType::MovementMap);
                 int2 target = interestMap.GetHighestPos();
-                // TODO highest pos seems to be returning values outside of range? Check northmost Creep 10
-                // target      = int2(8, 10);
 
                 // DebugInterest(interestMap, 0.01f, INTEREST_SIZE);
 
                 // TODO HANDLE NOT RETURNING A REAL TARGET? OTHERWISE WE CRASH! IE WITH NO NEARBY CREEPS IT JUS DIES
 
                 // printf("6: Pos: { %i, %i }    TARGET: { %i, %i }\n", pos.Val.x, pos.Val.y, target.x, target.y);
-                // target = int2(3, 3);
                 if (target != pos.Val)
                 {
                     Core::MovementCoster::GetPath(
@@ -73,9 +137,6 @@ namespace Overseer::Systems::AI
                     auto direction = GetDirection(pos.Val, path.Val[0]);
                     CommandHandler::Add(Move((double)entity, (double)direction));
                 }
-
-                // TODO Should return no path if target == same, check path not zero length before doing below
-
             }
         }
 
