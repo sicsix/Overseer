@@ -6,7 +6,7 @@
 #define OVERSEER_WASM_SRC_SYSTEMS_AI_AISYSTEM_H_
 #include "systems/SystemBase.h"
 #include "components/Components.h"
-#include "core/InfluenceMaps.h"
+#include "core/Influence.h"
 #include "commands/CommandHandler.h"
 #include "core/Math.h"
 #include "core/MovementCoster.h"

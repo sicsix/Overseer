@@ -7,16 +7,16 @@
 #include <queue>
 namespace Overseer::Core
 {
-    struct Node
+    struct QueueNode
     {
         int Index;
         int CostSoFar;
 
-        Node(int index, int costSoFar): Index(index), CostSoFar(costSoFar)
+        QueueNode(int index, int costSoFar): Index(index), CostSoFar(costSoFar)
         {
         }
 
-        bool operator<(const Node& rhs) const
+        bool operator<(const QueueNode& rhs) const
         {
             if (Index < rhs.Index)
                 return true;
@@ -24,15 +24,15 @@ namespace Overseer::Core
                 return false;
             return CostSoFar < rhs.CostSoFar;
         }
-        bool operator>(const Node& rhs) const
+        bool operator>(const QueueNode& rhs) const
         {
             return rhs < *this;
         }
-        bool operator<=(const Node& rhs) const
+        bool operator<=(const QueueNode& rhs) const
         {
             return !(rhs < *this);
         }
-        bool operator>=(const Node& rhs) const
+        bool operator>=(const QueueNode& rhs) const
         {
             return !(*this < rhs);
         }

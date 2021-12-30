@@ -14,34 +14,34 @@ namespace Overseer::Core
     class Pathfinder
     {
       private:
-        struct FinderNode;
-
-        NavMap                   NavigationMap;
-        FinderNode*              BlankNodeSet;
-        FinderNode*              NodeSet;
-        PriorityQueue<int, Node> PriorityQueue;
+        NavMap                        NavigationMap;
+        Node*                         BlankNodeSet;
+        Node*                         NodeSet;
+        PriorityQueue<int, QueueNode> PriorityQueue;
 
       public:
         Pathfinder(NavMap& navMap);
 
         bool FindPath(int2& start, int2& goal, Components::Path& path);
 
-      private:
-        static bool FindPath(NavMap&                           navMap,
-                             int2&                             start,
-                             int2&                             goal,
-                             Path&                             path,
-                             Core::PriorityQueue<int, Node>& openSet,
-                             FinderNode*                       nodeSet);
+        static void GetPath(int startIndex, int goalIndex, Node* nodeSet, Path& path);
 
-        static void ProcessDirections(NavMap&                                     navMap,
-                                      int2&                                       pos,
-                                      int2&                                       goal,
-                                      int                                         index,
-                                      int                                         parentCost,
-                                      Overseer::Core::PriorityQueue<int, Node>& openSet,
-                                      FinderNode*                                 nodeSet,
-                                      int4x2                                      offsets);
+      private:
+        static bool FindPath(NavMap&                              navMap,
+                             int2&                                start,
+                             int2&                                goal,
+                             Path&                                path,
+                             Core::PriorityQueue<int, QueueNode>& openSet,
+                             Node*                                nodeSet);
+
+        static void ProcessDirections(NavMap&                                        navMap,
+                                      int2&                                          pos,
+                                      int2&                                          goal,
+                                      int                                            index,
+                                      int                                            parentCost,
+                                      Overseer::Core::PriorityQueue<int, QueueNode>& openSet,
+                                      Node*                                          nodeSet,
+                                      int4x2                                         offsets);
     };
 } // namespace Overseer::Core
 

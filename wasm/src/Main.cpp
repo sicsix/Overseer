@@ -39,20 +39,20 @@ namespace Overseer
         printf("[WASM] Running MovementSystem...\n");
         movementSystem.Update(Registry);
 
-        auto start = int2(10, 10);
-        auto goal  = int2(90, 90);
+        // auto start = int2(10, 10);
+        // auto goal  = int2(90, 90);
 
-        printf("[WASM] Pathfinding debug\n");
-        auto pathFinder = Registry.ctx<Core::Pathfinder>();
-        auto path       = Components::Path();
-
-        for (int i = 0; i < 14; ++i)
-        {
-            bool foundPath = pathFinder.FindPath(start, goal, path);
-
-            if (!foundPath)
-                printf("[WASM] Failed to find path\n");
-        }
+        // printf("[WASM] Pathfinding debug\n");
+        // auto pathFinder = Registry.ctx<Core::Pathfinder>();
+        // auto path       = Components::Path();
+        //
+        // for (int i = 0; i < 14; ++i)
+        // {
+        //     bool foundPath = pathFinder.FindPath(start, goal, path);
+        //
+        //     if (!foundPath)
+        //         printf("[WASM] Failed to find path\n");
+        // }
 
         // printf("Path:\n");
         // for (int i = 0; i < path.Count; ++i)

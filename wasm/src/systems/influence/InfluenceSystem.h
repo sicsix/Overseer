@@ -6,7 +6,7 @@
 #define OVERSEER_WASM_SRC_SYSTEMS_INFLUENCE_INFLUENCESYSTEM_H_
 #include "systems/SystemBase.h"
 #include "components/Components.h"
-#include "core/InfluenceMaps.h"
+#include "core/Influence.h"
 #include "commands/CommandHandler.h"
 #include "core/Math.h"
 #include "core/MovementCoster.h"
@@ -50,7 +50,7 @@ namespace Overseer::Systems::Influence
             // int  ranX           = 0;
             for (auto entity : friendlyCreeps)
             {
-                // if (entity != (entt::entity)6)
+                // if (entity != (entt::entity)16)
                 //     continue;
                 // ranX++;
 
@@ -58,12 +58,13 @@ namespace Overseer::Systems::Influence
 
                 // printf("Entity: %i    Pos: { %i, %i }\n", entity, pos.Val.x, pos.Val.y);
 
-                ClampAndSetBounds(pos, proxIMAP, INFLUENCE_PROX_RADIUS, INFLUENCE_PROX_WIDTH);
-                ClampAndSetBounds(pos, threatIMAP, INFLUENCE_THREAT_RADIUS, INFLUENCE_THREAT_WIDTH);
+                proxIMAP.ClampAndSetBounds(pos.Val, INFLUENCE_PROX_RADIUS, INFLUENCE_PROX_WIDTH);
+                threatIMAP.ClampAndSetBounds(pos.Val, INFLUENCE_THREAT_RADIUS, INFLUENCE_THREAT_WIDTH);
 
                 movementCoster.Update(threatIMAP, creepMovementMap);
+                creepMovementMap.ClampAndSetBounds(pos.Val, INTEREST_RADIUS, INTEREST_WIDTH);
 
-                ProximityInfluence::Calculate(proxIMAP, creepMovementMap);
+                ProximityInfluence::Calculate(proxIMAP, navMap);
                 ThreatInfluence::Calculate(threatIMAP, lineOfSight, threat, creepMovementMap);
 
                 AddProxInfluence(friendlyProx, proxIMAP);
@@ -79,19 +80,20 @@ namespace Overseer::Systems::Influence
 
                 // printf("Entity: %i    Pos: { %i, %i }\n", entity, pos.Val.x, pos.Val.y);
 
-                ClampAndSetBounds(pos, proxIMAP, INFLUENCE_PROX_RADIUS, INFLUENCE_PROX_WIDTH);
-                ClampAndSetBounds(pos, threatIMAP, INFLUENCE_THREAT_RADIUS, INFLUENCE_THREAT_WIDTH);
+                proxIMAP.ClampAndSetBounds(pos.Val, INFLUENCE_PROX_RADIUS, INFLUENCE_PROX_WIDTH);
+                threatIMAP.ClampAndSetBounds(pos.Val, INFLUENCE_THREAT_RADIUS, INFLUENCE_THREAT_WIDTH);
 
                 movementCoster.Update(threatIMAP, creepMovementMap);
+                creepMovementMap.ClampAndSetBounds(pos.Val, INTEREST_RADIUS, INTEREST_WIDTH);
 
-                ProximityInfluence::Calculate(proxIMAP, creepMovementMap);
+                ProximityInfluence::Calculate(proxIMAP, navMap);
                 ThreatInfluence::Calculate(threatIMAP, lineOfSight, threat, creepMovementMap);
 
                 AddProxInfluence(enemyProx, proxIMAP);
                 AddThreatInfluence(enemyThreat, threatIMAP);
             }
 
-            DebugIMAP(friendlyProx, 0.01f, 750);
+            DebugIMAP(friendlyThreat, 0.01f, 750);
         }
 
       private:
@@ -100,9 +102,9 @@ namespace Overseer::Systems::Influence
             memset(imap.Influence, 0, sizeof(float) * MAP_SIZE);
         }
 
-        // void SubtractInfluence(Core::IMAP imap, CreepIMAP creepIMAP)
+        // void SubtractInfluence(Core::LocalMap imap, LocalMap creepIMAP)
         // {
-        //     int mapIndex = creepIMAP.MapStartIndex;
+        //     int mapIndex = creepIMAP.WorldStartIndex;
         //     int infIndex = creepIMAP.InfStartIndex;
         //
         //     for (int y = creepIMAP.InfStart.y; y < creepIMAP.InfEnd.y; ++y)
@@ -124,84 +126,58 @@ namespace Overseer::Systems::Influence
 
         void AddProxInfluence(Core::IMAP imap, CreepProxIMAP creepProxIMAP)
         {
-            int mapIndex = creepProxIMAP.MapStartIndex;
-            int infIndex = creepProxIMAP.InfStartIndex;
+            int worldIndex = creepProxIMAP.WorldStartIndex;
+            int localIndex = creepProxIMAP.LocalStartIndex;
+
+            int width           = creepProxIMAP.LocalEnd.x - creepProxIMAP.LocalStart.x;
+            int worldYIncrement = MAP_WIDTH - width;
+            int localYIncrement = INFLUENCE_PROX_WIDTH - width;
 
             // printf("AddProxInfluence: { ");
-            for (int y = creepProxIMAP.InfStart.y; y < creepProxIMAP.InfEnd.y; ++y)
+            for (int y = creepProxIMAP.LocalStart.y; y < creepProxIMAP.LocalEnd.y; ++y)
             {
-                for (int x = creepProxIMAP.InfStart.x; x < creepProxIMAP.InfEnd.x; ++x)
+                for (int x = creepProxIMAP.LocalStart.x; x < creepProxIMAP.LocalEnd.x; ++x)
                 {
-                    imap.Influence[mapIndex] += creepProxIMAP.Influence[infIndex];
+                    imap.Influence[worldIndex] += creepProxIMAP.Influence[localIndex];
                     // printf("{ Influence: %f, MapIndex: %i, InfIndex: %i }",
                     //        creepProxIMAP.Influence[infIndex],
                     //        mapIndex,
                     //        infIndex);
-                    mapIndex++;
-                    infIndex++;
+                    worldIndex++;
+                    localIndex++;
                 }
-                mapIndex += creepProxIMAP.MapYIncrement;
-                infIndex += creepProxIMAP.InfYIncrement;
+                worldIndex += worldYIncrement;
+                localIndex += localYIncrement;
             }
             // printf("} \n");
         }
 
         void AddThreatInfluence(Core::IMAP imap, CreepThreatIMAP creepThreatIMAP)
         {
-            int mapIndex = creepThreatIMAP.MapStartIndex;
-            int infIndex = creepThreatIMAP.InfStartIndex;
+            int worldIndex = creepThreatIMAP.WorldStartIndex;
+            int localIndex = creepThreatIMAP.LocalStartIndex;
+
+            int width           = creepThreatIMAP.LocalEnd.x - creepThreatIMAP.LocalStart.x;
+            int worldYIncrement = MAP_WIDTH - width;
+            int localYIncrement = INFLUENCE_THREAT_WIDTH - width;
 
             // printf("AddThreatInfluence: { ");
-            for (int y = creepThreatIMAP.InfStart.y; y < creepThreatIMAP.InfEnd.y; ++y)
+            for (int y = creepThreatIMAP.LocalStart.y; y < creepThreatIMAP.LocalEnd.y; ++y)
             {
-                for (int x = creepThreatIMAP.InfStart.x; x < creepThreatIMAP.InfEnd.x; ++x)
+                for (int x = creepThreatIMAP.LocalStart.x; x < creepThreatIMAP.LocalEnd.x; ++x)
                 {
-                    imap.Influence[mapIndex] += creepThreatIMAP.Influence[infIndex];
+                    imap.Influence[worldIndex] += creepThreatIMAP.Influence[localIndex];
                     // printf("{ Influence: %f, MapIndex: %i, InfIndex: %i }",
                     //        creepThreatIMAP.Influence[infIndex],
                     //        mapIndex,
                     //        infIndex);
-                    mapIndex++;
-                    infIndex++;
+                    worldIndex++;
+                    localIndex++;
                 }
-                mapIndex += creepThreatIMAP.MapYIncrement;
-                infIndex += creepThreatIMAP.InfYIncrement;
+                worldIndex += worldYIncrement;
+                localIndex += localYIncrement;
             }
             // printf("} \n");
-        }
-
-        void ClampAndSetBounds(Pos pos, CreepIMAP& creepIMAP, int influenceRadius, int influenceWidth)
-        {
-            int2 worldStartUnclamped = pos.Val - influenceRadius;
-            int2 worldEndUnclamped   = pos.Val + influenceRadius + 1;
-
-            creepIMAP.WorldStart    = max(worldStartUnclamped, 0);
-            creepIMAP.WorldEnd      = min(worldEndUnclamped, MAP_WIDTH);
-            creepIMAP.WorldCenter   = pos.Val;
-            creepIMAP.MapStartIndex = PosToIndex(creepIMAP.WorldStart, MAP_WIDTH);
-
-            creepIMAP.InfStart      = max(creepIMAP.WorldStart - worldStartUnclamped, 0);
-            creepIMAP.InfEnd        = influenceWidth - (worldEndUnclamped - creepIMAP.WorldEnd);
-            creepIMAP.InfStartIndex = PosToIndex(creepIMAP.InfStart, influenceWidth);
-
-            // printf(
-            //     "  InfStart: { %i, %i }    InfEnd: { %i, %i }    WorldStart: { %i, %i }    WorldEnd: { %i, %i }
-            //     WorldStartUnclamped: { %i, %i }    WorldEndUnclamped: { %i, %i }    MapStartIndex: %i InfStartIndex:
-            //     %i\n", creepIMAP.InfStart.x, creepIMAP.InfStart.y, creepIMAP.InfEnd.x, creepIMAP.InfEnd.y,
-            //     creepIMAP.WorldStart.x,
-            //     creepIMAP.WorldStart.y,
-            //     creepIMAP.WorldEnd.x,
-            //     creepIMAP.WorldEnd.y,
-            //     worldStartUnclamped.x,
-            //     worldStartUnclamped.y,
-            //     worldEndUnclamped.x,
-            //     worldEndUnclamped.y,
-            //     creepIMAP.MapStartIndex,
-            //     creepIMAP.InfStartIndex);
-
-            int width               = creepIMAP.InfEnd.x - creepIMAP.InfStart.x;
-            creepIMAP.MapYIncrement = MAP_WIDTH - width;
-            creepIMAP.InfYIncrement = influenceWidth - width;
         }
 
         void DebugIMAP(Core::IMAP imap, float minVal, int maxCount)
@@ -221,7 +197,7 @@ namespace Overseer::Systems::Influence
 
                 if (count >= maxCount)
                 {
-                    printf("[WASM] IMAP debug draw limit of %i elements hit\n", maxCount);
+                    printf("[WASM] LocalMap debug draw limit of %i elements hit\n", maxCount);
                     break;
                 }
             }

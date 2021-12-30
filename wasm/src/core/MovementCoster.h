@@ -14,8 +14,9 @@ namespace Overseer::Core
     class MovementCoster
     {
       private:
-        NavMap                   NavigationMap;
-        PriorityQueue<int, Node> PriorityQueue;
+        NavMap                        NavigationMap;
+        Node*                         BlankNodeSet;
+        PriorityQueue<int, QueueNode> PriorityQueue;
 
       public:
         MovementCoster(NavMap& navMap);
@@ -23,20 +24,21 @@ namespace Overseer::Core
         void Update(CreepThreatIMAP& threatIMAP, CreepMovementMap& creepMovementMap);
 
       private:
-        static void Update(NavMap&                         navMap,
-                           CreepThreatIMAP&                threatIMAP,
-                           CreepMovementMap&               creepMovementMap,
-                           Core::PriorityQueue<int, Node>& openSet);
+        static void Update(NavMap&                              navMap,
+                           CreepThreatIMAP&                     threatIMAP,
+                           CreepMovementMap&                    creepMovementMap,
+                           Core::PriorityQueue<int, QueueNode>& openSet);
 
-        static void ProcessDirections(NavMap&                         navMap,
-                                      int2&                           currWorldPos,
-                                      int2&                           currInfPos,
-                                      int2&                           worldStart,
-                                      int2&                           worldEnd,
-                                      int                             parentCost,
-                                      CreepMovementMap&               creepMovementMap,
-                                      Core::PriorityQueue<int, Node>& openSet,
-                                      int4x2                          offsets);
+        static void ProcessDirections(NavMap&                              navMap,
+                                      int2&                                currWorldPos,
+                                      int2&                                currInfPos,
+                                      int2&                                worldStart,
+                                      int2&                                worldEnd,
+                                      int                                  index,
+                                      int                                  parentCost,
+                                      CreepMovementMap&                    creepMovementMap,
+                                      Core::PriorityQueue<int, QueueNode>& openSet,
+                                      int4x2                               offsets);
     };
 } // namespace Overseer::Core
 

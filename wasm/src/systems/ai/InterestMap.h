@@ -6,7 +6,7 @@
 #define OVERSEER_WASM_SRC_SYSTEMS_AI_INTERESTMAP_H_
 #include "Includes.h"
 #include "core/Math.h"
-#include "core/InfluenceMaps.h"
+#include "core/Influence.h"
 #include "components/Components.h"
 
 namespace Overseer::Systems::AI
@@ -27,17 +27,26 @@ namespace Overseer::Systems::AI
         Proximity // With pathfinding - perhaps use cached values from influence calcs? expand size to INTEREST_SIZE
     };
 
+    struct InterestTemplate : Core::LocalMap
+    {
+        float* Influence = new float[INTEREST_SIZE] { 0 };
+        bool   Created   = false;
+    };
+
+    struct InfluenceCache : Core::LocalMap
+    {
+        float* Influence = new float[INTEREST_SIZE] { 0 };
+        bool   Created   = false;
+    };
+
     class InterestMap
     {
       private:
         float Interest[INTEREST_SIZE] = { 0 };
         int2  WorldCenter;
 
-        float InterestTemplates[2][INTEREST_SIZE] = { 0 };
-        bool  InterestTemplateCreated[2]          = { false };
-
-        float InfluenceCache[6][INTEREST_SIZE] = { 0 };
-        bool  InfluenceCacheCreated[6]         = { false };
+        InterestTemplate InterestTemplates[2];
+        InfluenceCache   InfluenceCaches[6];
 
         Components::CreepProxIMAP   MyProxIMAP;
         Components::CreepThreatIMAP MyThreatIMAP;
@@ -71,22 +80,22 @@ namespace Overseer::Systems::AI
 
         void Add(InfluenceType influenceType, float multiplier)
         {
-            float* influenceTemplate = GetInfluenceCache(influenceType);
+            InfluenceCache& influenceCache = GetInfluenceCache(influenceType);
             for (int i = 0; i < INTEREST_SIZE; i++)
             {
                 float value = Interest[i];
-                value += influenceTemplate[i] + multiplier;
+                value += influenceCache.Influence[i] + multiplier;
                 Interest[i] = value;
             }
         }
 
         void Multiply(InfluenceType influenceType, float multiplier)
         {
-            float* influenceTemplate = GetInfluenceCache(influenceType);
+            InfluenceCache& influenceCache = GetInfluenceCache(influenceType);
             for (int i = 0; i < INTEREST_SIZE; i++)
             {
                 float value = Interest[i];
-                value += influenceTemplate[i] * multiplier;
+                value += influenceCache.Influence[i] * multiplier;
                 Interest[i] = value;
             }
         }
@@ -158,10 +167,10 @@ namespace Overseer::Systems::AI
 
         void ApplyInterestTemplate(InterestType interestType, int radius)
         {
-            float* interestTemplate = GetInterestTemplate(interestType, radius);
+            InterestTemplate& interestTemplate = GetInterestTemplate(interestType, radius);
             for (int i = 0; i < INTEREST_SIZE; i++)
             {
-                Interest[i]  *= interestTemplate[i];
+                Interest[i] *= interestTemplate.Influence[i];
             }
         }
 
@@ -174,40 +183,48 @@ namespace Overseer::Systems::AI
         }
 
       private:
-        float* GetInfluenceCache(InfluenceType influenceType)
+        InfluenceCache& GetInfluenceCache(InfluenceType influenceType)
         {
-            if (!InfluenceCacheCreated[(int)influenceType])
+            InfluenceCache& cache = InfluenceCaches[(int)influenceType];
+            if (!cache.Created)
             {
                 if (influenceType == InfluenceType::MyProx || influenceType == InfluenceType::MyThreat)
-                    CreateMyInfluenceCache(influenceType);
+                    InfluenceCaches[(int)influenceType] = CreateMyInfluenceCache(influenceType, cache);
                 else
-                    CreateInfluenceCache(influenceType);
+                    InfluenceCaches[(int)influenceType] = CreateInfluenceCache(influenceType, cache);
             }
-            return InfluenceCache[(int)influenceType];
+            return cache;
         }
 
-        void CreateMyInfluenceCache(InfluenceType influenceType)
+        InfluenceCache& CreateMyInfluenceCache(InfluenceType influenceType, InfluenceCache& cache)
         {
-            float* influence = InfluenceCache[(int)influenceType];
+            cache.Created    = true;
+            float* influence = cache.Influence;
             // todo for x,y loop, using personal offsets
+            return cache;
         }
 
-        void CreateInfluenceCache(InfluenceType influenceType)
+        InfluenceCache& CreateInfluenceCache(InfluenceType influenceType, InfluenceCache& cache)
         {
-            float* influence = InfluenceCache[(int)influenceType];
+            cache.Created    = true;
+            float* influence = cache.Influence;
             // todo for x,y loop using map offsets
+            return cache;
         }
 
-        float* GetInterestTemplate(InterestType interestType)
+        InterestTemplate& GetInterestTemplate(InterestType interestType, int radius)
         {
-            if (!InterestTemplateCreated[(int)interestType])
-                CreateInterestTemplate(interestType);
-            return InterestTemplates[(int)interestType];
+            InterestTemplate& temp = InterestTemplates[(int)interestType];
+            if (!temp.Created)
+                InterestTemplates[(int)interestType] = CreateInterestTemplate(interestType, temp);
+            return temp;
         }
 
-        void CreateInterestTemplate(InterestType interestType)
+        InterestTemplate& CreateInterestTemplate(InterestType interestType, InterestTemplate& temp)
         {
-            float* interestTemplate = InfluenceCache[(int)interestType];
+            temp.Created     = true;
+            float* influence = temp.Influence;
+            return temp;
         }
     };
 } // namespace Overseer::Systems::AI

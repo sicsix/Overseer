@@ -64,7 +64,7 @@ PackConstructorInitializers: CurrentLine
 PointerAlignment: Left
 QualifierAlignment: Left
 ReferenceAlignment: Left
-ReflowComments: true
+ReflowComments: false
 #ShortNamespaceLines:
 SortIncludes: Never
 SortUsingDeclarations: true

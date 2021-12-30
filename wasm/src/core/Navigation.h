@@ -8,10 +8,20 @@
 
 namespace Overseer::Core
 {
-    class Navigation
+    constexpr static int TerrainCost[] = { 1, INT_MAXVALUE, 5 };
+
+    struct Node
     {
-      public:
-        constexpr static int TerrainCost[] = { 1, INT_MAXVALUE, 5 };
+        int CameFrom;
+        int Cost = 2147483647;
+
+        Node()
+        {
+        }
+
+        Node(int cameFrom, int cost): CameFrom(cameFrom), Cost(cost)
+        {
+        }
     };
 } // namespace Overseer::Core
 

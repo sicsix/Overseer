@@ -41,7 +41,7 @@ namespace Overseer::Systems
 
             for (int i = 0; i < MAP_SIZE; ++i)
             {
-                navCosts[i] = Core::Navigation::TerrainCost[terrainMap.Map[i]];
+                navCosts[i] = Core::TerrainCost[terrainMap.Map[i]];
             }
 
             int* baseNavCosts = new int[MAP_SIZE];

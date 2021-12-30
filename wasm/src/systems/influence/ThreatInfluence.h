@@ -42,31 +42,63 @@ namespace Overseer::Systems::Influence
       private:
         static void SetAttackThreat(CreepThreatIMAP& threatIMAP, Threat& threat, CreepMovementMap& creepMovementMap)
         {
-            int mapIndex = threatIMAP.MapStartIndex;
-            int infIndex = threatIMAP.InfStartIndex;
-            int movIndex = ;
+            int localIndex = threatIMAP.LocalStartIndex;
+            int movIndex = PosToIndex(WorldToLocal(threatIMAP.WorldStart, creepMovementMap.WorldStart), INTEREST_WIDTH);
+            int width    = threatIMAP.LocalEnd.x - threatIMAP.LocalStart.x;
+            int localYIncrement = INFLUENCE_THREAT_WIDTH - width;
+            int movYIncrement   = INTEREST_WIDTH - width;
+
+            // printf(
+            //     "THREAT - WorldStart: { %i, %i }    WorldEnd: { %i, %i }    WorldCenter: { %i, %i }    WorldStartIndex: %i    LocalStart: { %i, %i }    LocalEnd: { %i, %i }    LocalStartIndex: %i    LocalYIncrement: %i\n",
+            //     threatIMAP.WorldStart.x,
+            //     threatIMAP.WorldStart.y,
+            //     threatIMAP.WorldEnd.x,
+            //     threatIMAP.WorldEnd.y,
+            //     threatIMAP.WorldCenter.x,
+            //     threatIMAP.WorldCenter.y,
+            //     threatIMAP.WorldStartIndex,
+            //     threatIMAP.LocalStart.x,
+            //     threatIMAP.LocalStart.y,
+            //     threatIMAP.LocalEnd.x,
+            //     threatIMAP.LocalEnd.y,
+            //     threatIMAP.LocalStartIndex,
+            //     localYIncrement);
+            //
+            // printf(
+            //     "MOVE - WorldStart: { %i, %i }    WorldEnd: { %i, %i }    WorldCenter: { %i, %i }    WorldStartIndex: %i    LocalStart: { %i, %i }    LocalEnd: { %i, %i }    LocalStartIndex: %i    LocalYIncrement: %i    AdjustedStart: %i\n",
+            //     creepMovementMap.WorldStart.x,
+            //     creepMovementMap.WorldStart.y,
+            //     creepMovementMap.WorldEnd.x,
+            //     creepMovementMap.WorldEnd.y,
+            //     creepMovementMap.WorldCenter.x,
+            //     creepMovementMap.WorldCenter.y,
+            //     creepMovementMap.WorldStartIndex,
+            //     creepMovementMap.LocalStart.x,
+            //     creepMovementMap.LocalStart.y,
+            //     creepMovementMap.LocalEnd.x,
+            //     creepMovementMap.LocalEnd.y,
+            //     creepMovementMap.LocalStartIndex,
+            //     movYIncrement,
+            //     movIndex);
 
             // printf("CalculateAttackThreatInfluence: { ");
-            for (int y = threatIMAP.InfStart.y; y < threatIMAP.InfEnd.y; ++y)
+            for (int y = threatIMAP.LocalStart.y; y < threatIMAP.LocalEnd.y; ++y)
             {
-                for (int x = threatIMAP.InfStart.x; x < threatIMAP.InfEnd.x; ++x)
+                for (int x = threatIMAP.LocalStart.x; x < threatIMAP.LocalEnd.x; ++x)
                 {
-                    int   moveCost = min(creepMovementMap.Costs[movIndex] * threat.TicksPerMove, INFLUENCE_THREAT_RADIUS);
+                    int   moveCost = creepMovementMap.Nodes[movIndex].Cost * threat.TicksPerMove;
                     float distBase = CalculateInverseLinearInfluence(1.0f, moveCost, INFLUENCE_THREAT_RADIUS);
                     float inf      = distBase * threat.AttackDamage * INFLUENCE_THREAT_ATTACK_FACTOR;
-                    threatIMAP.Influence[infIndex] = inf;
-                    // printf("{ MapIndex: %i, InfIndex: %i, Cost: %i, DistBase: %f, Inf: %f }, ",
-                    //        mapIndex,
-                    //        infIndex,
-                    //        cost,
+                    threatIMAP.Influence[localIndex] = inf;
+                    // printf("{ LocalIndex: %i, MoveCost: %i, DistBase: %f, Inf: %f }, ",
+                    //        localIndex,
+                    //        moveCost,
                     //        distBase,
                     //        inf);
-                    mapIndex++;
-                    infIndex++;
+                    localIndex++;
                     movIndex++;
                 }
-                mapIndex += threatIMAP.MapYIncrement;
-                infIndex += threatIMAP.InfYIncrement;
+                localIndex += localYIncrement;
                 movIndex += movYIncrement;
             }
             // printf("} \n");
@@ -74,20 +106,21 @@ namespace Overseer::Systems::Influence
 
         static void AddRangedAttackThreat(CreepThreatIMAP& threatIMAP, Threat& threat, int* los)
         {
-            int mapIndex = threatIMAP.MapStartIndex;
-            int infIndex = threatIMAP.InfStartIndex;
+            int localIndex      = threatIMAP.LocalStartIndex;
+            int width           = threatIMAP.LocalEnd.x - threatIMAP.LocalStart.x;
+            int localYIncrement = INFLUENCE_THREAT_WIDTH - width;
 
             // TODO handle non moving creeps
 
             // printf("CalculateRangedAttackThreatInfluence: { ");
-            for (int y = threatIMAP.InfStart.y; y < threatIMAP.InfEnd.y; ++y)
+            for (int y = threatIMAP.LocalStart.y; y < threatIMAP.LocalEnd.y; ++y)
             {
-                for (int x = threatIMAP.InfStart.x; x < threatIMAP.InfEnd.x; ++x)
+                for (int x = threatIMAP.LocalStart.x; x < threatIMAP.LocalEnd.x; ++x)
                 {
-                    int   inLos      = los[infIndex];
-                    float threatBase = inLos ? InfluencePrecomputes::ThreatRangedAttack4Falloff[infIndex] : 0;
+                    int   inLos      = los[localIndex];
+                    float threatBase = inLos ? InfluencePrecomputes::ThreatRangedAttack4Falloff[localIndex] : 0;
                     float inf        = threatBase * threat.RangedAttackDamage * INFLUENCE_THREAT_RANGED_ATTACK_FACTOR;
-                    threatIMAP.Influence[infIndex] += inf;
+                    threatIMAP.Influence[localIndex] += inf;
                     // if (inf > 0)
                     // {
                     //     // printf("{ MapIndex: %i, InfIndex: %i, InLos: %i, ThreatBase: %f, Inf: %f }, ",
@@ -97,31 +130,30 @@ namespace Overseer::Systems::Influence
                     //            threatBase,
                     //            inf);
                     // }
-                    mapIndex++;
-                    infIndex++;
+                    localIndex++;
                 }
-                mapIndex += threatIMAP.MapYIncrement;
-                infIndex += threatIMAP.InfYIncrement;
+                localIndex += localYIncrement;
             }
             // printf("} \n");
         }
 
         static void AddRangedHealThreat(CreepThreatIMAP& threatIMAP, Threat& threat, int* los)
         {
-            int mapIndex = threatIMAP.MapStartIndex;
-            int infIndex = threatIMAP.InfStartIndex;
+            int localIndex      = threatIMAP.LocalStartIndex;
+            int width           = threatIMAP.LocalEnd.x - threatIMAP.LocalStart.x;
+            int localYIncrement = INFLUENCE_THREAT_WIDTH - width;
 
             // TODO handle non moving creeps
 
             // printf("CalculateRangedHealThreatInfluence: { ");
-            for (int y = threatIMAP.InfStart.y; y < threatIMAP.InfEnd.y; ++y)
+            for (int y = threatIMAP.LocalStart.y; y < threatIMAP.LocalEnd.y; ++y)
             {
-                for (int x = threatIMAP.InfStart.x; x < threatIMAP.InfEnd.x; ++x)
+                for (int x = threatIMAP.LocalStart.x; x < threatIMAP.LocalEnd.x; ++x)
                 {
-                    int   inLos      = los[infIndex];
-                    float threatBase = inLos ? InfluencePrecomputes::ThreatRangedAttack4Falloff[infIndex] : 0;
+                    int   inLos      = los[localIndex];
+                    float threatBase = inLos ? InfluencePrecomputes::ThreatRangedAttack4Falloff[localIndex] : 0;
                     float inf        = threatBase * threat.RangedHealRate * INFLUENCE_THREAT_RANGED_HEAL_FACTOR;
-                    threatIMAP.Influence[infIndex] += inf;
+                    threatIMAP.Influence[localIndex] += inf;
                     // if (inf > 0)
                     // {
                     //     // printf("{ MapIndex: %i, InfIndex: %i, InLos: %i, ThreatBase: %f, Inf: %f }, ",
@@ -131,11 +163,9 @@ namespace Overseer::Systems::Influence
                     //            threatBase,
                     //            inf);
                     // }
-                    mapIndex++;
-                    infIndex++;
+                    localIndex++;
                 }
-                mapIndex += threatIMAP.MapYIncrement;
-                infIndex += threatIMAP.InfYIncrement;
+                localIndex += localYIncrement;
             }
         }
     };

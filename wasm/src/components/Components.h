@@ -5,6 +5,8 @@
 #ifndef OVERSEER_WASM_SRC_COMPONENTS_COMPONENTS_H_
 #define OVERSEER_WASM_SRC_COMPONENTS_COMPONENTS_H_
 #include "Includes.h"
+#include "core/Navigation.h"
+#include "core/Influence.h"
 
 namespace Overseer::Components
 {
@@ -170,32 +172,19 @@ namespace Overseer::Components
         }
     };
 
-    struct CreepIMAP
-    {
-        int2   WorldStart;
-        int2   WorldEnd;
-        int2   WorldCenter;
-        int    MapStartIndex;
-        int    MapYIncrement;
-        int2   InfStart;
-        int2   InfEnd;
-        int    InfStartIndex;
-        int    InfYIncrement;
-    };
-
-    struct CreepProxIMAP : CreepIMAP
+    struct CreepProxIMAP : Core::LocalMap
     {
         float* Influence = new float[INFLUENCE_PROX_SIZE];
     };
 
-    struct CreepThreatIMAP : CreepIMAP
+    struct CreepThreatIMAP : Core::LocalMap
     {
         float* Influence = new float[INFLUENCE_THREAT_SIZE];
     };
 
-    struct CreepMovementMap
+    struct CreepMovementMap : Core::LocalMap
     {
-        int* Costs = new int[INTEREST_SIZE];
+        Core::Node* Nodes = new Core::Node[INTEREST_SIZE];
     };
 
 } // namespace Overseer::Components

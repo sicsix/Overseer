@@ -42,6 +42,8 @@ constexpr int  INTEREST_STEP_SIZE = MAP_WIDTH - INTEREST_WIDTH;
 constexpr int  INTEREST_RADIUS    = 8;
 constexpr int2 INTEREST_CENTER    = int2(INTEREST_RADIUS, INTEREST_RADIUS);
 
+constexpr int MAX_SQUAD_SIZE = 20;
+
 enum struct Direction
 {
     TOP          = 1,

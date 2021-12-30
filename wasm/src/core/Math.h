@@ -52,6 +52,10 @@ namespace Overseer::Core::Math
                gequal(positions.y, start.y);
     }
 
+    inline static int2 WorldToLocal(int2& worldPos, int2& localWorldStart)
+    {
+        return worldPos - localWorldStart;
+    }
 
     inline static int DistanceManhattan(int2& orig, int2& dest)
     {
