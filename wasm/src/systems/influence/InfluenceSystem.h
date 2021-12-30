@@ -44,8 +44,6 @@ namespace Overseer::Systems::Influence
             ClearMap(enemyProx);
             ClearMap(enemyThreat);
 
-            int costs[INFLUENCE_THREAT_SIZE + 1];
-
             auto friendlyCreeps = registry.view<My, Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat>();
             // int  ranX           = 0;
             for (auto entity : friendlyCreeps)
