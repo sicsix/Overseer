@@ -188,10 +188,11 @@ namespace Overseer::Core
             auto node                     = nodeSet[currentIndex];
             // printf("Path: %i    WorldIndex: %i    CameFrom: %i\n", pathIndex, currentIndex, node.CameFrom);
             currentIndex                  = node.CameFrom;
+#ifdef DEBUG_ENABLED
+            if (pathIndex >= 128)
+                printf("[WASM] ERROR: Core::Pathfindiner - Path length exceeded maximum of 128\n");
+#endif
         } while (currentIndex != startIndex);
-
-        if (pathIndex >= 128)
-            throw printf("[WASM] Path length exceeded maximum of 128\n");
 
         int currIndex = 0;
         for (int i = pathIndex - 1; i >= 0; --i)

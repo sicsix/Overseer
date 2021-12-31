@@ -39,7 +39,7 @@ export class CreepExporter
             // Packing the body parts 8 bits for type, 8 bits for hits, two body parts per int (1 int32 carries 2 body parts vs using 4 int32s without packing)
             if (creep.body.length > 1)
             {
-                for (let j = 0; j < creep.body.length; j += 2)
+                for (let j = 0; j < creep.body.length - 1; j += 2)
                 {
                     let body1 = creep.body[j];
                     let body2 = creep.body[j + 1];

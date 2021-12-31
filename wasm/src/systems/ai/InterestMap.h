@@ -166,7 +166,7 @@ namespace Overseer::Systems::AI
 
         void Normalise()
         {
-            float max = std::numeric_limits<float>::min();
+            float max = std::numeric_limits<float>::lowest();
             float min = std::numeric_limits<float>::max();
 
             for (int i = 0; i < INTEREST_SIZE; i++)
@@ -198,7 +198,7 @@ namespace Overseer::Systems::AI
 
         void NormaliseAndInvert()
         {
-            float max = std::numeric_limits<float>::min();
+            float max = std::numeric_limits<float>::lowest();
             float min = std::numeric_limits<float>::max();
 
             for (int i = 0; i < INTEREST_SIZE; i++)
@@ -250,9 +250,10 @@ namespace Overseer::Systems::AI
         int2 GetHighestPos()
         {
             // TODO re introduce random
-            int   offset   = (rand() % INTEREST_SIZE);
+            // int   offset   = (rand() % INTEREST_SIZE);
+            int   offset   = 0;
             // printf("Offset: %i\n", offset);
-            float max      = std::numeric_limits<float>::min();
+            float max      = std::numeric_limits<float>::lowest();
             int   maxIndex = -1;
 
             // int worldIndex = WorldStartIndex;
@@ -312,13 +313,30 @@ namespace Overseer::Systems::AI
             int2 worldPos    = WorldStart + localOffset;
             // int2 worldPos = IndexToPos(maxIndex, MAP_WIDTH);
 
-            // printf("MAXINDEX: %i    LOCAL POS: { %i, %i }    HIGHEST POS: { %i, %i }    HIGHEST VAL: %f\n",
-            //        maxIndex,
-            //        localOffset.x,
-            //        localOffset.y,
-            //        worldPos.x,
-            //        worldPos.y,
-            //        max);
+            // printf(
+            //     "MAXINDEX: %i    LOCAL POS: { %i, %i }    HIGHEST POS: { %i, %i }    HIGHEST VAL: %f    LOCALSTARTINDEX: %i    LOCALOFFSET: { %i, %i }\n",
+            //     maxIndex,
+            //     localOffset.x,
+            //     localOffset.y,
+            //     worldPos.x,
+            //     worldPos.y,
+            //     max,
+            //     LocalStartIndex,
+            //     localOffset.x,
+            //     localOffset.y);
+
+            // if (maxIndex == -1)
+            // {
+            //     printf("INTEREST RETURNED -1 : { ");
+            //     for (int i = 0; i < INTEREST_SIZE; ++i)
+            //     {
+            //         float value = Interest[i];
+            //         printf("{ Idx: %i, Int: %f }, ", i, value);
+            //     }
+            //     printf("}\n");
+            // }
+
+            worldPos = max <= 0.0f ? int2(-1, -1) : worldPos;
 
             return worldPos;
         }
@@ -504,7 +522,7 @@ namespace Overseer::Systems::AI
                         printf("[WASM] ERROR: InterestMap::CopyFromMovementMap - OUT OF RANGE\n");
 #endif
                     int   cost = movementMap.Nodes[movementIndex].Cost;
-                    float inf  = CalculateInverseLinearInfluence(1.0f, cost, INTEREST_RADIUS);
+                    float inf  = CalculateInverseLinearInfluence(1.0f, cost, INTEREST_RADIUS + 1);
                     // printf("{ InterestIndex: %i, MovementIndex: %i, Inf: %f }, ", interestIndex, movementIndex, inf);
 
                     influence[interestIndex] = inf;
@@ -586,7 +604,7 @@ namespace Overseer::Systems::AI
             for (int i = 0; i < INTEREST_SIZE; ++i)
             {
                 int   cost   = movementMap.Nodes[i].Cost;
-                float inf    = CalculateInverseLinearInfluence(1.0f, cost, INTEREST_RADIUS);
+                float inf    = CalculateInverseLinearInfluence(1.0f, cost, INTEREST_RADIUS + 1);
                 // Turns 0 -> distance into 1 -> 0
                 // printf("%f", inf);
                 influence[i] = inf;
@@ -600,7 +618,7 @@ namespace Overseer::Systems::AI
             {
                 int cost     = movementMap.Nodes[i].Cost;
                 // Turns 0 -> distance into 1 -> 0
-                influence[i] = CalculateInverseLinearInfluence(1.0f, cost, maxDist);
+                influence[i] = CalculateInverseLinearInfluence(1.0f, cost, maxDist + 1);
             }
         }
     };

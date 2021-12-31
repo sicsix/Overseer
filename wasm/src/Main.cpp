@@ -7,27 +7,29 @@
 #include "systems/movement/MovementSystem.h"
 #include "systems/influence/InfluenceSystem.h"
 #include "core/Pathfinder.h"
-#include "systems/ai/AISystem.h"
+#include "systems/ai/GruntSystem.h"
+#include "systems/ai/SquadSystem.h"
 
 namespace Overseer
 {
     Systems::MapSystem                  mapSystem;
     Systems::Influence::InfluenceSystem influenceSystem;
-    Systems::AI::AISystem               aiSystem;
+    Systems::AI::SquadSystem            squadSystem;
+    Systems::AI::GruntSystem            gruntSystem;
     Systems::MovementSystem             movementSystem;
 
     Main::Main(uint* importBuffer, double* commandBuffer): ImportBuffer(importBuffer)
     {
         Commands::CommandHandler::SetBuffer(commandBuffer);
 
+        rand();
         Signals();
 
         mapSystem.Initialise(Registry);
         influenceSystem.Initialise(Registry);
-        aiSystem.Initialise(Registry);
+        squadSystem.Initialise(Registry);
+        gruntSystem.Initialise(Registry);
         movementSystem.Initialise(Registry);
-
-        rand();
     }
 
     int Main::Execute(uint objectCount)
@@ -41,61 +43,14 @@ namespace Overseer
         printf("[WASM] Running InfluenceSystem...\n");
         influenceSystem.Update(Registry);
 
-        printf("[WASM] Running AISystem...\n");
-        aiSystem.Update(Registry);
+        printf("[WASM] Running SquadSystem...\n");
+        squadSystem.Update(Registry);
 
-        // printf("[WASM] Running MovementSystem...\n");
-        // movementSystem.Update(Registry);
+        printf("[WASM] Running GruntSystem...\n");
+        gruntSystem.Update(Registry);
 
-        // auto start = int2(10, 10);
-        // auto goal  = int2(90, 90);
-
-        // printf("[WASM] Pathfinding debug\n");
-        // auto pathFinder = Registry.ctx<Core::Pathfinder>();
-        // auto path       = Components::Path();
-        //
-        // for (int i = 0; i < 14; ++i)
-        // {
-        //     bool foundPath = pathFinder.FindPath(start, goal, path);
-        //
-        //     if (!foundPath)
-        //         printf("[WASM] Failed to find path\n");
-        // }
-
-        // printf("Path:\n");
-        // for (int i = 0; i < path.Count; ++i)
-        // {
-        //     int2 pos = path.Val[i];
-        //     printf(" {%i, %i} ", pos.x, pos.y);
-        // }
-        // printf("\n");
-
-        //		auto group = Registry.group<Pos, Health>();
-        //
-        //		for (auto entity : group)
-        //		{
-        //			auto [pos, health] = group.Pop(entity);
-        //
-        //			printf("Entity: %u - Pos: { %u, %u } - Health: { %u, %u}\n", entity, pos.Val.x, pos.Val.y,
-        // health.Hits, health.HitsMax);
-        //		}
-
-        //		Pos* pos = group.raw<Pos>();
-        //		Health* health = group.raw<velocity>();
-
-        //		auto terrainMap = Registry.ctx<Structures::TerrainMap>().Map;
-        //
-        //		for (int y = 0; y < 25; ++y)
-        //		{
-        //			for (int x = 0; x < 100; ++x)
-        //			{
-        //				auto index = y * 100 + x;
-        //				auto terrain = terrainMap[index];
-        //				if (terrain == 1)
-        //					Commands::CommandHandler::Add(Commands::GameVisualRect({ x, y }, { 1, 1 },
-        // Commands::Colour::WHITE, 1));
-        //			}
-        //		}
+        printf("[WASM] Running MovementSystem...\n");
+        movementSystem.Update(Registry);
 
         printf("[WASM] Finalising command buffer...\n");
         return Commands::CommandHandler::End();

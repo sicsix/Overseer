@@ -290,8 +290,10 @@ namespace Overseer::Core
             //        node.CameFrom,
             //        currentLocalIndex);
             currentIndex = node.CameFrom;
+#ifdef DEBUG_ENABLED
             if (pathIndex >= 128)
-                throw printf("[WASM] Path length exceeded maximum of 128\n");
+                printf("[WASM] ERROR: Core::MovementCoster - Path length exceeded maximum of 128\n");
+#endif
         } while (currentIndex != startIndex);
 
         int currIndex = 0;

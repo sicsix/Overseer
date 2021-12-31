@@ -19,12 +19,22 @@ namespace Overseer::Systems
 
         void Update(entt::registry& registry) override
         {
-            // auto view = registry.view<My, Path>();
-            //
-            // for (auto entity : view)
-            // {
-            //     CommandHandler::Add(Move((double)entity, (double)Direction::BOTTOM_RIGHT));
-            // }
+            auto myCreeps = registry.view<My, Pos, Path>();
+
+            for (auto entity : myCreeps)
+            {
+                auto [pos, path] = myCreeps.get(entity);
+
+                if (path.Count == 0)
+                    continue;
+
+                int2 target = path.Val[0];
+
+                if (pos.Val == target)
+                    continue;
+
+                CommandHandler::Add(Move((double)entity, (double)GetDirection(pos.Val, target)));
+            }
         }
     };
 } // namespace Overseer::Systems
