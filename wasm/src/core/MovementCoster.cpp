@@ -17,48 +17,30 @@ namespace Overseer::Core
 
     void MovementCoster::Update(CreepMovementMap& creepMovementMap)
     {
-        printf("Coster 1\n");
         memcpy(creepMovementMap.Nodes, BlankNodeSet, sizeof(Node) * (INTEREST_SIZE + 1));
-        printf("Coster 2\n");
         Update(NavigationMap, creepMovementMap, PriorityQueue);
         PriorityQueue.Clear();
-        printf("Coster 3\n");
     }
 
     void MovementCoster::Update(NavMap&                              navMap,
                                 CreepMovementMap&                    movementMap,
                                 Core::PriorityQueue<int, QueueNode>& openSet)
     {
-        // printf(
-        //     "WorldStart: { %i, %i }    WorldEnd: { %i, %i }    WorldCenter: { %i, %i }    WorldStartIndex: %i
-        //     MapYIncrement: %i    InfStart: { %i, %i }    InfEnd: { %i, %i }    InfStartIndex: %i    InfYIncrement:
-        //     %i\n", threatIMAP.WorldStart.x, threatIMAP.WorldStart.y, threatIMAP.WorldEnd.x, threatIMAP.WorldEnd.y,
-        //     threatIMAP.WorldCenter.x,
-        //     threatIMAP.WorldCenter.y,
-        //     threatIMAP.WorldStartIndex,
-        //     threatIMAP.MapYIncrement,
-        //     threatIMAP.InfStart.x,
-        //     threatIMAP.InfStart.y,
-        //     threatIMAP.InfEnd.x,
-        //     threatIMAP.InfEnd.y,
-        //     threatIMAP.InfStartIndex,
-        //     threatIMAP.InfYIncrement);
+        // int centerIndex = PosToIndex(movementMap.WorldCenter, MAP_WIDTH);
 
-        int centerIndex = PosToIndex(movementMap.WorldCenter, MAP_WIDTH);
+        // int2 centerStartUnclamped = movementMap.WorldCenter - 1;
+        // int2 centerStart          = max(centerStartUnclamped, 0);
+        // int2 centerEnd            = min(movementMap.WorldCenter + 2, MAP_WIDTH);
 
-        int2 centerStartUnclamped = movementMap.WorldCenter - 1;
-        int2 centerStart          = max(centerStartUnclamped, 0);
-        int2 centerEnd            = min(movementMap.WorldCenter + 2, MAP_WIDTH);
+        // int2 offset   = centerStart - centerStartUnclamped;
+        // int2 infStart = INTEREST_CENTER - 1 + offset;
 
-        int2 offset   = centerStart - centerStartUnclamped;
-        int2 infStart = INTEREST_CENTER - 1 + offset;
+        // int width         = centerEnd.x - centerStart.x;
+        // int mapYIncrement = MAP_WIDTH - width;
+        // int infYIncrement = INTEREST_WIDTH - width;
 
-        int width         = centerEnd.x - centerStart.x;
-        int mapYIncrement = MAP_WIDTH - width;
-        int infYIncrement = INTEREST_WIDTH - width;
-
-        int mapIndex = PosToIndex(centerStart, MAP_WIDTH);
-        int infIndex = PosToIndex(infStart, INTEREST_WIDTH);
+        // int mapIndex = PosToIndex(centerStart, MAP_WIDTH);
+        // int infIndex = PosToIndex(infStart, INTEREST_WIDTH);
 
         // printf(
         //     "WorldCenter: { %i, %i }    WorldStart: { %i, %i }    WorldEnd: { %i, %i }   WorldStartIndex: % i    LocalCenter: { %i, %i }    LocalStart: { %i, %i }    LocalEnd: { %i, %i }   LocalStartIndex: % i\n",
@@ -93,32 +75,29 @@ namespace Overseer::Core
         //     mapIndex,
         //     infIndex);
 
-        printf("Coster 22\n");
-        // TODO this is a little clumsy given the repurposing of movementcoster, this could probably be better managed in the threat calculations by checking dist == minDist
-        // TODO original purpose of this code was to make sure the threat level adjacent to a creep was the maximum value
-        for (int y = centerStart.y; y < centerEnd.y; ++y)
-        {
-            for (int x = centerStart.x; x < centerEnd.x; ++x)
-            {
-                printf("Coster 221: MapIndex: %i   InfIndex: %i\n", mapIndex, infIndex);
-                if (navMap.Map[mapIndex] != INT_MAXVALUE)
-                {
-                    printf("Coster 222\n");
-                    movementMap.Nodes[infIndex] = Node(centerIndex, 0);
+        // // TODO this is a little clumsy given the repurposing of movementcoster, this could probably be better managed in the threat calculations by checking dist == minDist
+        // // TODO original purpose of this code was to make sure the threat level adjacent to a creep was the maximum value
+        // for (int y = centerStart.y; y < centerEnd.y; ++y)
+        // {
+        //     for (int x = centerStart.x; x < centerEnd.x; ++x)
+        //     {
+        //         if (navMap.Map[mapIndex] != INT_MAXVALUE)
+        //         {
+        //             movementMap.Nodes[infIndex] = Node(centerIndex, 0);
+        //
+        //             if (mapIndex != centerIndex)
+        //                 openSet.Push(0, QueueNode(mapIndex, 0));
+        //         }
+        //         mapIndex++;
+        //         infIndex++;
+        //     }
+        //     mapIndex += mapYIncrement;
+        //     infIndex += infYIncrement;
+        // }
 
-                    printf("Coster 223\n");
-                    if (mapIndex != centerIndex)
-                        openSet.Push(0, QueueNode(mapIndex, 0));
-                    printf("Coster 224\n");
-                }
-                mapIndex++;
-                infIndex++;
-            }
-            mapIndex += mapYIncrement;
-            infIndex += infYIncrement;
-        }
+        movementMap.Nodes[movementMap.LocalCenterIndex] = Node(movementMap.WorldCenterIndex, 0);
+        openSet.Push(0, QueueNode(movementMap.WorldCenterIndex, 0));
 
-        printf("Coster 23\n");
         while (!openSet.Empty())
         {
             const QueueNode current = openSet.Pop();
@@ -128,8 +107,6 @@ namespace Overseer::Core
             int  currInfIndex = PosToIndex(currInfPos, INTEREST_WIDTH);
 
             auto visitedNode = movementMap.Nodes[currInfIndex];
-
-            printf("Coster 24\n");
 
             if (visitedNode.Cost < current.CostSoFar)
                 continue;
@@ -174,7 +151,7 @@ namespace Overseer::Core
                                            int4x2                               offsets)
     {
         int4x2 currentWorldPositions = int4x2(int4(currWorldPos.x), int4(currWorldPos.y)) + offsets;
-        int4   isPosInbounds =
+        int4   isWorldPosInbounds =
             IsPosInboundsSIMD(currentWorldPositions, creepMovementMap.WorldStart, creepMovementMap.WorldEnd);
         int4 currentWorldIndexes = PosToIndexSIMD(currentWorldPositions, MAP_WIDTH);
         currentWorldIndexes      = clamp(currentWorldIndexes, 0, MAP_SIZE - 1);
@@ -189,10 +166,10 @@ namespace Overseer::Core
         //     currentWorldPositions.y.z,
         //     currentWorldPositions.x.w,
         //     currentWorldPositions.y.w,
-        //     isPosInbounds.x,
-        //     isPosInbounds.y,
-        //     isPosInbounds.y,
-        //     isPosInbounds.z,
+        //     isWorldPosInbounds.x,
+        //     isWorldPosInbounds.y,
+        //     isWorldPosInbounds.y,
+        //     isWorldPosInbounds.z,
         //     currentWorldIndexes.x,
         //     currentWorldIndexes.y,
         //     currentWorldIndexes.z,
@@ -208,11 +185,14 @@ namespace Overseer::Core
         // printf("        TileCosts: { %i, %i, %i, %i }\n", tileCosts.x, tileCosts.y, tileCosts.z, tileCosts.w);
 
         int4x2 currentInfPositions = int4x2(int4(currInfPos.x), int4(currInfPos.y)) + offsets;
+        int4   isInfPosInbounds    = IsPosInboundsSIMD(currentInfPositions, int2(INTEREST_WIDTH, INTEREST_WIDTH));
         int4   currentInfIndexes   = PosToIndexSIMD(currentInfPositions, INTEREST_WIDTH);
-
+        currentInfIndexes          = select(isInfPosInbounds, currentInfIndexes, INTEREST_SIZE);
         // printf(
-        //     "        CurrentInfPositions: {{ %i, %i }, { %i, %i }, { %i, %i } { %i, %i }    CurrentInfIndexes: { %i,
-        //     %i, %i, %i }\n", currentInfPositions.x.x, currentInfPositions.y.x, currentInfPositions.x.y,
+        //     "        CurrentInfPositions: {{ %i, %i }, { %i, %i }, { %i, %i } { %i, %i }    CurrentInfIndexes: { %i, %i, %i, %i }\n",
+        //     currentInfPositions.x.x,
+        //     currentInfPositions.y.x,
+        //     currentInfPositions.x.y,
         //     currentInfPositions.y.y,
         //     currentInfPositions.x.z,
         //     currentInfPositions.y.z,
@@ -229,17 +209,19 @@ namespace Overseer::Core
                                   creepMovementMap.Nodes[currentInfIndexes.w].Cost);
 
         bool4 isBetterRoute = less(costSoFar, prevCostSoFar);
-        // printf(
-        //     "        IsBetterRoute: { %i, %i, %i, %i }\n", isBetterRoute.x, isBetterRoute.y, isBetterRoute.z,
-        //     isBetterRoute.w);
+        // printf("        IsBetterRoute: { %i, %i, %i, %i }\n",
+        //        isBetterRoute.x,
+        //        isBetterRoute.y,
+        //        isBetterRoute.z,
+        //        isBetterRoute.w);
 
-        bool4 isTileValid = (bool4)(!equal(tileCosts, INT_MAXVALUE) & isPosInbounds & isBetterRoute);
+        bool4 isTileValid =
+            (bool4)(!equal(tileCosts, INT_MAXVALUE) & isWorldPosInbounds & isInfPosInbounds & isBetterRoute);
         currentInfIndexes =
             select(isTileValid, currentInfIndexes, INTEREST_SIZE); // INTEREST_SIZE is outside influence map
 
-        // printf("        IsTileValid: { %i, %i, %i, %i }\n", isTileValid.x, isTileValid.y, isTileValid.z,
-        // isTileValid.w); printf("        CostSoFar: { %i, %i, %i, %i }\n", costSoFar.x, costSoFar.y, costSoFar.z,
-        // costSoFar.w);
+        // printf("        IsTileValid: { %i, %i, %i, %i }\n", isTileValid.x, isTileValid.y, isTileValid.z, isTileValid.w);
+        // printf("        CostSoFar: { %i, %i, %i, %i }\n", costSoFar.x, costSoFar.y, costSoFar.z, costSoFar.w);
 
         creepMovementMap.Nodes[currentInfIndexes.x] = Node(index, costSoFar.x);
         creepMovementMap.Nodes[currentInfIndexes.y] = Node(index, costSoFar.y);

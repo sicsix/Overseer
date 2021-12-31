@@ -44,8 +44,8 @@ namespace Overseer
         printf("[WASM] Running AISystem...\n");
         aiSystem.Update(Registry);
 
-        printf("[WASM] Running MovementSystem...\n");
-        movementSystem.Update(Registry);
+        // printf("[WASM] Running MovementSystem...\n");
+        // movementSystem.Update(Registry);
 
         // auto start = int2(10, 10);
         // auto goal  = int2(90, 90);

@@ -5,6 +5,8 @@
 #ifndef OVERSEER_WASM_SRC_INCLUDES_H_
 #define OVERSEER_WASM_SRC_INCLUDES_H_
 
+#define DEBUG_ENABLED
+
 #include <cstdio>
 #include "linalg.h"
 

@@ -72,10 +72,9 @@ namespace Overseer::Systems::AI
                     if (entity == bestLeader)
                         continue;
 
-                    squad.Grunts[squad.Size++] = entity;
+                    // squad.Grunts[squad.Size++] = entity;
                     registry.emplace<SquadRef>(entity, SquadRef(squadEntity, bestLeader));
                 }
-
 
                 registry.emplace<Squad>(squadEntity, squad);
                 registry.emplace<SquadLeader>(bestLeader, SquadLeader(squadEntity));
@@ -93,7 +92,7 @@ namespace Overseer::Systems::AI
                 auto goal = int2(90, 90);
                 pathfinder.FindPath(pos.Val, goal, path);
 
-                if (path.Val[0] != pos.Val)
+                if (path.Count > 0 && path.Val[0] != pos.Val)
                 {
                     Core::MovementCoster::GetPath(
                         PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(path.Val[0], MAP_WIDTH), movementMap, path);
@@ -102,17 +101,18 @@ namespace Overseer::Systems::AI
                 }
             }
 
-            auto grunts = registry.view<My, SquadRef, Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat, Path>(
-                entt::exclude<SquadLeader>);
+            auto grunts =
+                registry.view<My, SquadRef, Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat, Path>(
+                    entt::exclude<SquadLeader>);
 
             for (auto entity : grunts)
             {
-                if (entity != (entt::entity)10)
-                    continue;
+                // if (entity != (entt::entity)10)
+                //     continue;
 
                 auto [squadRef, pos, proxIMAP, threatIMAP, movementMap, threat, path] = grunts.get(entity);
 
-                auto squadLeader = squadRef.SquadLeader;
+                auto squadLeader            = squadRef.SquadLeader;
                 auto squadLeaderMovementMap = registry.get<CreepMovementMap>(squadLeader);
 
                 // TODO get SL movement map
@@ -127,16 +127,15 @@ namespace Overseer::Systems::AI
                                                enemyThreat,
                                                navMap);
 
-                printf("Interest 1");
                 // interestMap.Add(InfluenceType::FriendlyProx, 1.0f);
                 // interestMap.Add(InfluenceType::MyProx, -1.0f);
                 // interestMap.NormaliseAndInvert();
                 // interestMap.ApplyInterestTemplate(InterestType::MovementMap);
                 // int2 target = interestMap.GetHighestPos();
 
-                interestMap.Add(InfluenceType::SquadLeaderMovementMap, 2.0f);
-                printf("Interest 2");
-                // interestMap.ApplyInterestTemplate(InterestType::MovementMap);
+                interestMap.Add(InfluenceType::SquadLeaderMovementMap, 1.0f);
+                // interestMap.Add(1.0f);
+                interestMap.ApplyInterestTemplate(InterestType::MovementMap);
                 int2 target = interestMap.GetHighestPos();
 
                 if (entity == (entt::entity)10)
@@ -144,14 +143,21 @@ namespace Overseer::Systems::AI
 
                 // TODO HANDLE NOT RETURNING A REAL TARGET? OTHERWISE WE CRASH! IE WITH NO NEARBY CREEPS IT JUS DIES
 
-                // printf("6: Pos: { %i, %i }    TARGET: { %i, %i }\n", pos.Val.x, pos.Val.y, target.x, target.y);
-                // if (target != pos.Val)
-                // {
-                //     Core::MovementCoster::GetPath(
-                //         PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(target, MAP_WIDTH), movementMap, path);
-                //     auto direction = GetDirection(pos.Val, path.Val[0]);
-                //     CommandHandler::Add(Move((double)entity, (double)direction));
-                // }
+                printf("POS: { %i, %i }    TARGET: { %i, %i }\n", pos.Val.x, pos.Val.y, target.x, target.y);
+                if (target != pos.Val)
+                {
+                    Core::MovementCoster::GetPath(
+                        PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(target, MAP_WIDTH), movementMap, path);
+                    auto direction = GetDirection(pos.Val, path.Val[0]);
+                    printf("Path: { ");
+                    for (int i = 0; i < path.Count; ++i)
+                    {
+                        printf("{ %i, %i }, ", path.Val[i].x, path.Val[i].y);
+                    }
+                    printf("}\n");
+                    printf("        DIRECTION: %i}\n", direction);
+                    CommandHandler::Add(Move((double)entity, (double)direction));
+                }
             }
         }
 

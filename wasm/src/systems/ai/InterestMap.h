@@ -44,26 +44,28 @@ namespace Overseer::Systems::AI
     // TODO maybe store these on the stack instead?
     struct InterestTemplate
     {
-        float* Influence;
-        bool   Created = false;
+        float Influence[INTEREST_SIZE] = {};
+        bool  Created                  = false;
 
-        ~InterestTemplate()
-        {
-            if (Created)
-                delete[] Influence;
-        }
+        // ~InterestTemplate()
+        // {
+        //     printf("FREE INTEREST\n");
+        //     if (Created)
+        //         delete[] Influence;
+        // }
     };
 
     struct InfluenceCache
     {
-        float* Influence;
-        bool   Created = false;
+        float Influence[INTEREST_SIZE] = {};
+        bool  Created                  = false;
 
-        ~InfluenceCache()
-        {
-            if (Created)
-                delete[] Influence;
-        }
+        // ~InfluenceCache()
+        // {
+        //     printf("FREE INFLUENCE\n");
+        //     if (Created)
+        //         delete[] Influence;
+        // }
     };
 
     class InterestMap : public Core::LocalMap
@@ -73,7 +75,7 @@ namespace Overseer::Systems::AI
 
       private:
         InterestTemplate InterestTemplates[2][8];
-        InfluenceCache   InfluenceCaches[6];
+        InfluenceCache   InfluenceCaches[7];
 
         CreepProxIMAP            MyProxIMAP;
         CreepThreatIMAP          MyThreatIMAP;
@@ -115,6 +117,14 @@ namespace Overseer::Systems::AI
         }
 
         // TODO potentially add center only options?
+
+        void Add(float value)
+        {
+            for (int i = 0; i < INTEREST_SIZE; i++)
+            {
+                Interest[i] += value;
+            }
+        }
 
         void Add(InfluenceType influenceType, float multiplier)
         {
@@ -245,62 +255,70 @@ namespace Overseer::Systems::AI
             float max      = std::numeric_limits<float>::min();
             int   maxIndex = -1;
 
-            int worldIndex = WorldStartIndex;
-            int localIndex = LocalStartIndex;
-
-            int width           = LocalEnd.x - LocalStart.x;
-            int worldYIncrement = MAP_WIDTH - width;
-            int localYIncrement = INTEREST_WIDTH - width;
-
-            // printf("GetHighestPos: { ");
-            for (int y = LocalStart.y; y < LocalEnd.y; ++y)
-            {
-                for (int x = LocalStart.x; x < LocalEnd.x; ++x)
-                {
-                    float value = Interest[localIndex];
-                    // printf("{ WorldIndex: %i, LocalIndex: %i, Value: %f }, ", worldIndex, localIndex, value);
-                    if (value >
-                        max) // TODO WHEN SETTING THIS TO <= WE FAIL ON THE PATHFINDING, IT SHOULD STILL WORK AS RANGES ARE THE SAME, IT CHOOSES BOTTOM LEFT POSITION AND NO PATH CAN BE FOUND, INVESTIGATE
-                    {
-                        max      = value;
-                        maxIndex = worldIndex;
-                    }
-
-                    worldIndex++;
-                    localIndex++;
-                }
-                worldIndex += worldYIncrement;
-                localIndex += localYIncrement;
-            }
-            // printf("} \n");
-
-            // // printf("{ ");
-            // for (int i = offset; i < INTEREST_SIZE; ++i)
-            // {
-            //     float value = Interest[i];
-            //     // printf("{ Index: %i, Value: %f }, ", i, value);
-            //     if (value <= max)
-            //         continue;
-            //     max      = value;
-            //     maxIndex = i;
-            // }
-            // // printf(" }\n");
+            // int worldIndex = WorldStartIndex;
+            // int localIndex = LocalStartIndex;
             //
-            // // printf("{ ");
-            // for (int i = 0; i < offset; ++i)
+            // int width           = LocalEnd.x - LocalStart.x;
+            // int worldYIncrement = MAP_WIDTH - width;
+            // int localYIncrement = INTEREST_WIDTH - width;
+            //
+            // // TODO dont need to do this, use lower one as faster, everything outside the map bounds should be zero anyway
+            // // printf("GetHighestPos: { ");
+            // for (int y = LocalStart.y; y < LocalEnd.y; ++y)
             // {
-            //     float value = Interest[i];
-            //     // printf("{Index: %i, Value: %f }, ", i, value);
-            //     if (value <= max)
-            //         continue;
-            //     max      = value;
-            //     maxIndex = i;
+            //     for (int x = LocalStart.x; x < LocalEnd.x; ++x)
+            //     {
+            //         float value = Interest[localIndex];
+            //         // printf("{ WorldIndex: %i, LocalIndex: %i, Value: %f }, ", worldIndex, localIndex, value);
+            //         if (value > max)
+            //         {
+            //             max      = value;
+            //             maxIndex = worldIndex;
+            //         }
+            //
+            //         worldIndex++;
+            //         localIndex++;
+            //     }
+            //     worldIndex += worldYIncrement;
+            //     localIndex += localYIncrement;
             // }
-            // // printf(" }\n");
+            // // printf("} \n");
 
-            int2 worldPos = IndexToPos(maxIndex, MAP_WIDTH);
+            // printf("{ ");
+            for (int i = offset; i < INTEREST_SIZE; ++i)
+            {
+                float value = Interest[i];
+                // printf("{ Index: %i, Value: %f }, ", i, value);
+                if (value <= max)
+                    continue;
+                max      = value;
+                maxIndex = i;
+            }
+            // printf(" }\n");
 
-            // printf("HIGHEST VAL: %f\n", max);
+            // printf("{ ");
+            for (int i = 0; i < offset; ++i)
+            {
+                float value = Interest[i];
+                // printf("{Index: %i, Value: %f }, ", i, value);
+                if (value <= max)
+                    continue;
+                max      = value;
+                maxIndex = i;
+            }
+            // printf(" }\n");
+
+            int2 localOffset = IndexToPos(maxIndex - LocalStartIndex, INTEREST_WIDTH);
+            int2 worldPos    = WorldStart + localOffset;
+            // int2 worldPos = IndexToPos(maxIndex, MAP_WIDTH);
+
+            // printf("MAXINDEX: %i    LOCAL POS: { %i, %i }    HIGHEST POS: { %i, %i }    HIGHEST VAL: %f\n",
+            //        maxIndex,
+            //        localOffset.x,
+            //        localOffset.y,
+            //        worldPos.x,
+            //        worldPos.y,
+            //        max);
 
             return worldPos;
         }
@@ -325,31 +343,31 @@ namespace Overseer::Systems::AI
             switch (influenceType)
             {
                 case InfluenceType::MyProx:
-                    cache.Influence = new float[INTEREST_SIZE] { 0 };
+                    // cache.Influence = new float[INTEREST_SIZE] { 0 };
                     CopyFromProxMap(MyProxIMAP, cache.Influence);
                     break;
                 case InfluenceType::MyThreat:
-                    cache.Influence = new float[INTEREST_SIZE] { 0 };
+                    // cache.Influence = new float[INTEREST_SIZE] { 0 };
                     CopyFromThreatMap(MyThreatIMAP, cache.Influence);
                     break;
                 case InfluenceType::FriendlyProx:
-                    cache.Influence = new float[INTEREST_SIZE];
+                    // cache.Influence = new float[INTEREST_SIZE];
                     CopyFromIMAP(FriendlyProxIMAP, cache.Influence);
                     break;
                 case InfluenceType::FriendlyThreat:
-                    cache.Influence = new float[INTEREST_SIZE];
+                    // cache.Influence = new float[INTEREST_SIZE];
                     CopyFromIMAP(FriendlyThreatIMAP, cache.Influence);
                     break;
                 case InfluenceType::EnemyProx:
-                    cache.Influence = new float[INTEREST_SIZE];
+                    // cache.Influence = new float[INTEREST_SIZE];
                     CopyFromIMAP(EnemyProxIMAP, cache.Influence);
                     break;
                 case InfluenceType::EnemyThreat:
-                    cache.Influence = new float[INTEREST_SIZE];
+                    // cache.Influence = new float[INTEREST_SIZE];
                     CopyFromIMAP(EnemyThreatIMAP, cache.Influence);
                     break;
                 case InfluenceType::SquadLeaderMovementMap:
-                    cache.Influence = new float[INTEREST_SIZE] { 0 };
+                    // cache.Influence = new float[INTEREST_SIZE] { 0 };
                     CopyFromMovementMap(SquadLeaderMovementMap, cache.Influence);
                     break;
             }
@@ -371,6 +389,10 @@ namespace Overseer::Systems::AI
             {
                 for (int x = LocalStart.x; x < LocalEnd.x; ++x)
                 {
+#ifdef DEBUG_ENABLED
+                    if (worldIndex < 0 || worldIndex >= MAP_SIZE || localIndex < 0 || localIndex >= INTEREST_SIZE)
+                        printf("[WASM] ERROR: InterestMap::CopyFromIMAP - OUT OF RANGE\n");
+#endif
                     float inf             = imap.Influence[worldIndex];
                     influence[localIndex] = inf;
                     // printf("Inf: %f, ", inf);
@@ -385,6 +407,8 @@ namespace Overseer::Systems::AI
 
         void CopyFromProxMap(CreepProxIMAP& proxIMAP, float* influence)
         {
+            // NOTE MyProxMap is always centered on same location and contained within the interest map
+
             int interestIndex = PosToIndex(proxIMAP.WorldStart - WorldStart, INTEREST_WIDTH) + LocalStartIndex;
             int proxIndex     = proxIMAP.LocalStartIndex;
 
@@ -397,6 +421,11 @@ namespace Overseer::Systems::AI
             {
                 for (int x = proxIMAP.LocalStart.x; x < proxIMAP.LocalEnd.x; ++x)
                 {
+#ifdef DEBUG_ENABLED
+                    if (interestIndex < 0 || interestIndex >= INTEREST_SIZE || proxIndex < 0 ||
+                        proxIndex >= INFLUENCE_PROX_SIZE)
+                        printf("[WASM] ERROR: InterestMap::CopyFromProxMap - OUT OF RANGE\n");
+#endif
                     float inf                = proxIMAP.Influence[proxIndex];
                     influence[interestIndex] = inf;
                     // printf("Inf: %f, ", inf);
@@ -411,6 +440,7 @@ namespace Overseer::Systems::AI
 
         void CopyFromThreatMap(CreepThreatIMAP& threatIMAP, float* influence)
         {
+            // NOTE MyThreatMap is always centered on same location and contained within the interest map
             int interestIndex = PosToIndex(threatIMAP.WorldStart - WorldStart, INTEREST_WIDTH) + LocalStartIndex;
             int threatIndex   = threatIMAP.LocalStartIndex;
 
@@ -423,6 +453,11 @@ namespace Overseer::Systems::AI
             {
                 for (int x = threatIMAP.LocalStart.x; x < threatIMAP.LocalEnd.x; ++x)
                 {
+#ifdef DEBUG_ENABLED
+                    if (interestIndex < 0 || interestIndex >= INTEREST_SIZE || threatIndex < 0 ||
+                        threatIndex >= INFLUENCE_THREAT_SIZE)
+                        printf("[WASM] ERROR: InterestMap::CopyFromThreatMap - OUT OF RANGE\n");
+#endif
                     float inf                = threatIMAP.Influence[threatIndex];
                     influence[interestIndex] = inf;
                     // printf("Inf: %f, ", inf);
@@ -437,20 +472,41 @@ namespace Overseer::Systems::AI
 
         void CopyFromMovementMap(CreepMovementMap& movementMap, float* influence)
         {
-            int interestIndex = PosToIndex(movementMap.WorldStart - WorldStart, INTEREST_WIDTH) + LocalStartIndex;
-            int movementIndex = movementMap.LocalStartIndex;
+            int2 worldStart = max(movementMap.WorldStart, WorldStart);
+            int2 worldEnd   = min(movementMap.WorldEnd, WorldEnd);
 
-            int width      = movementMap.LocalEnd.x - movementMap.LocalStart.x;
+            int interestIndex = PosToIndex(worldStart - WorldStart, INTEREST_WIDTH) + LocalStartIndex;
+            int movementIndex =
+                PosToIndex(worldStart - movementMap.WorldStart, INTEREST_WIDTH) + movementMap.LocalStartIndex;
+
+            int width      = worldEnd.x - worldStart.x;
             int yIncrement = INTEREST_WIDTH - width;
 
-            printf("CopyFromMovementMap: { ");
-            for (int y = movementMap.LocalStart.y; y < movementMap.LocalEnd.y; ++y)
+            // printf(
+            //     "worldStart: { %i, %i }    worldEnd: { %i, %i }    interestIndex: %i    movementIndex: %i    width: %i    yIncrement: %i",
+            //     worldStart.x,
+            //     worldStart.y,
+            //     worldEnd.x,
+            //     worldEnd.y,
+            //     interestIndex,
+            //     movementIndex,
+            //     width,
+            //     yIncrement);
+
+            // printf("CopyFromMovementMap: { ");
+            for (int y = worldStart.y; y < worldEnd.y; ++y)
             {
-                for (int x = movementMap.LocalStart.x; x < movementMap.LocalEnd.x; ++x)
+                for (int x = worldStart.x; x < worldEnd.x; ++x)
                 {
-                    int   cost   = movementMap.Nodes[movementIndex].Cost;
-                    float inf    = CalculateInverseLinearInfluence(1.0f, cost, INTEREST_WIDTH);
-                    printf("{ InterestIndex: %i, MovementIndex: %i, Inf: %f }, ", interestIndex, movementIndex, inf);
+#ifdef DEBUG_ENABLED
+                    if (interestIndex < 0 || interestIndex >= INTEREST_SIZE || movementIndex < 0 ||
+                        movementIndex >= INTEREST_SIZE)
+                        printf("[WASM] ERROR: InterestMap::CopyFromMovementMap - OUT OF RANGE\n");
+#endif
+                    int   cost = movementMap.Nodes[movementIndex].Cost;
+                    float inf  = CalculateInverseLinearInfluence(1.0f, cost, INTEREST_RADIUS);
+                    // printf("{ InterestIndex: %i, MovementIndex: %i, Inf: %f }, ", interestIndex, movementIndex, inf);
+
                     influence[interestIndex] = inf;
                     interestIndex++;
                     movementIndex++;
@@ -458,7 +514,7 @@ namespace Overseer::Systems::AI
                 interestIndex += yIncrement;
                 movementIndex += yIncrement;
             }
-            printf("} \n");
+            // printf("} \n");
         }
 
         InterestTemplate& GetInterestTemplate(InterestType interestType, InterestRange range)
@@ -472,8 +528,8 @@ namespace Overseer::Systems::AI
 
         InterestTemplate& CreateInterestTemplate(InterestType interestType, InterestRange range, InterestTemplate& temp)
         {
-            temp.Created   = true;
-            temp.Influence = new float[INTEREST_SIZE];
+            temp.Created = true;
+            // temp.Influence = new float[INTEREST_SIZE];
 
             switch (interestType)
             {
@@ -507,6 +563,10 @@ namespace Overseer::Systems::AI
             {
                 for (int x = LocalStart.x; x < LocalEnd.x; ++x)
                 {
+#ifdef DEBUG_ENABLED
+                    if (worldIndex < 0 || worldIndex >= MAP_SIZE || localIndex < 0 || localIndex >= INTEREST_SIZE)
+                        printf("[WASM] ERROR: InterestMap::CreateProximityTemplate - OUT OF RANGE\n");
+#endif
                     int dist              = DistanceChebyshev(LocalCenter, int2(x, y));
                     dist                  = NavMap.Map[worldIndex] == INT_MAXVALUE ? rangeInt : dist;
                     float inf             = CalculateInverseLinearInfluence(1.0f, dist, rangeInt);
@@ -525,9 +585,11 @@ namespace Overseer::Systems::AI
         {
             for (int i = 0; i < INTEREST_SIZE; ++i)
             {
-                int cost     = movementMap.Nodes[i].Cost;
+                int   cost   = movementMap.Nodes[i].Cost;
+                float inf    = CalculateInverseLinearInfluence(1.0f, cost, INTEREST_RADIUS);
                 // Turns 0 -> distance into 1 -> 0
-                influence[i] = CalculateInverseLinearInfluence(1.0f, cost, INTEREST_WIDTH);
+                // printf("%f", inf);
+                influence[i] = inf;
             }
         }
 
