@@ -8,6 +8,7 @@
 #include "Structures.h"
 #include "components/Components.h"
 #include "PriorityQueue.h"
+#include "core/Influence/CreepMovement.h"
 
 namespace Overseer::Core
 {
@@ -21,13 +22,13 @@ namespace Overseer::Core
       public:
         MovementCoster(NavMap& navMap);
 
-        void Update(CreepMovementMap& creepMovementMap);
+        void Update(Influence::CreepMovement& movement);
 
-        static void GetPath(int startIndex, int goalIndex, CreepMovementMap& movementMap, Path& path);
+        static void GetPath(int startIndex, int goalIndex, Influence::CreepMovement& movement, Path& path);
 
       private:
         static void Update(NavMap&                              navMap,
-                           CreepMovementMap& movementMap,
+                           Influence::CreepMovement&            movement,
                            Core::PriorityQueue<int, QueueNode>& openSet);
 
         static void ProcessDirections(NavMap&                              navMap,
@@ -35,7 +36,7 @@ namespace Overseer::Core
                                       int2&                                currInfPos,
                                       int                                  index,
                                       int                                  parentCost,
-                                      CreepMovementMap&                    creepMovementMap,
+                                      Influence::CreepMovement&            movement,
                                       Core::PriorityQueue<int, QueueNode>& openSet,
                                       int4x2                               offsets);
     };

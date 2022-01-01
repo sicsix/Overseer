@@ -1,35 +1,14 @@
 //
-// Created by Tim on 26/12/2021.
+// Created by Tim on 1/01/2022.
 //
 
-#ifndef OVERSEER_WASM_SRC_CORE_INFLUENCE_H_
-#define OVERSEER_WASM_SRC_CORE_INFLUENCE_H_
+#ifndef OVERSEER_WASM_SRC_CORE_INFLUENCE_LOCALMAP_H_
+#define OVERSEER_WASM_SRC_CORE_INFLUENCE_LOCALMAP_H_
 #include "Includes.h"
 #include "core/Math.h"
 
-namespace Overseer::Core
+namespace Overseer::Core::Influence
 {
-    struct IMAP
-    {
-        float* Influence = new float[MAP_SIZE];
-    };
-
-    struct FriendlyProxIMAP : IMAP
-    {
-    };
-
-    struct FriendlyThreatIMAP : IMAP
-    {
-    };
-
-    struct EnemyProxIMAP : IMAP
-    {
-    };
-
-    struct EnemyThreatIMAP : IMAP
-    {
-    };
-
     struct LocalMap
     {
         int2 WorldStart;
@@ -77,6 +56,5 @@ namespace Overseer::Core
             //     LocalStartIndex);
         }
     };
-} // namespace Overseer::Core
-
-#endif // OVERSEER_WASM_SRC_CORE_INFLUENCE_H_
+}
+#endif //OVERSEER_WASM_SRC_CORE_INFLUENCE_LOCALMAP_H_

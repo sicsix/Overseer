@@ -1,25 +1,24 @@
 //
-// Created by Tim on 30/12/2021.
+// Created by Tim on 1/01/2022.
 //
 
-#ifndef OVERSEER_WASM_SRC_SYSTEMS_INFLUENCE_PROXIMITYINFLUENCE_H_
-#define OVERSEER_WASM_SRC_SYSTEMS_INFLUENCE_PROXIMITYINFLUENCE_H_
+#ifndef OVERSEER_WASM_SRC_CORE_INFLUENCE_CREEPPROX_H_
+#define OVERSEER_WASM_SRC_CORE_INFLUENCE_CREEPPROX_H_
+#include "LocalMap.h"
 #include "core/Structures.h"
-#include "components/Components.h"
-#include "core/Math.h"
-#include "core/MovementCoster.h"
-#include "core/LineOfSight.h"
 
-namespace Overseer::Systems::Influence
+namespace Overseer::Core::Influence
 {
-    struct ProximityInfluence
+    struct CreepProx : LocalMap
     {
-        static void Calculate(CreepProxIMAP& proxIMAP, Core::NavMap& navMap)
-        {
-            int worldIndex = proxIMAP.WorldStartIndex;
-            int localIndex = proxIMAP.LocalStartIndex;
+        float* Influence = new float[INFLUENCE_PROX_SIZE];
 
-            int width           = proxIMAP.LocalEnd.x - proxIMAP.LocalStart.x;
+        void Calculate(Core::NavMap& navMap)
+        {
+            int worldIndex = WorldStartIndex;
+            int localIndex = LocalStartIndex;
+
+            int width           = LocalEnd.x - LocalStart.x;
             int worldYIncrement = MAP_WIDTH - width;
             int localYIncrement = INFLUENCE_PROX_WIDTH - width;
 
@@ -41,14 +40,14 @@ namespace Overseer::Systems::Influence
             //     localYIncrement);
 
             // printf("CalculateProximityInfluence: { ");
-            for (int y = proxIMAP.LocalStart.y; y < proxIMAP.LocalEnd.y; ++y)
+            for (int y = LocalStart.y; y < LocalEnd.y; ++y)
             {
-                for (int x = proxIMAP.LocalStart.x; x < proxIMAP.LocalEnd.x; ++x)
+                for (int x = LocalStart.x; x < LocalEnd.x; ++x)
                 {
-                    int dist  = DistanceChebyshev(proxIMAP.LocalCenter, int2(x, y));
-                    dist      = navMap.Map[worldIndex] == INT_MAXVALUE ? INFLUENCE_PROX_RADIUS : dist;
-                    float inf = CalculateInverseLinearInfluence(1.0f, dist, INFLUENCE_PROX_RADIUS);
-                    proxIMAP.Influence[localIndex] = inf;
+                    int dist              = DistanceChebyshev(LocalCenter, int2(x, y));
+                    dist                  = navMap.Map[worldIndex] == INT_MAXVALUE ? INFLUENCE_PROX_RADIUS : dist;
+                    float inf             = CalculateInverseLinearInfluence(1.0f, dist, INFLUENCE_PROX_RADIUS);
+                    Influence[localIndex] = inf;
                     // printf("{ WorldIndex: %i, LocalIndex: %i, Inf: %f }, ", worldIndex, localIndex, inf);
                     worldIndex++;
                     localIndex++;
@@ -59,5 +58,5 @@ namespace Overseer::Systems::Influence
             // printf("} \n");
         }
     };
-} // namespace Overseer::Systems::Influence
-#endif // OVERSEER_WASM_SRC_SYSTEMS_INFLUENCE_PROXIMITYINFLUENCE_H_
+}
+#endif //OVERSEER_WASM_SRC_CORE_INFLUENCE_CREEPPROX_H_

@@ -2,6 +2,7 @@
 #include "core/Structures.h"
 #include "components/Components.h"
 #include "Signals.h"
+#include "core/Influence/Influence.h"
 
 namespace Overseer::Imports
 {
@@ -97,9 +98,9 @@ namespace Overseer::Imports
                     registry.emplace<Path>(entity);
                 }
 
-                registry.emplace<CreepMovementMap>(entity);
-                registry.emplace<CreepThreatIMAP>(entity);
-                registry.emplace<CreepProxIMAP>(entity);
+                registry.emplace<CreepMovement>(entity);
+                registry.emplace<CreepThreat>(entity);
+                registry.emplace<CreepProx>(entity);
             }
 
             registry.emplace_or_replace<Pos>(entity, Pos({ x, y }));

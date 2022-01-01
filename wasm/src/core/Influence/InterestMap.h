@@ -6,11 +6,14 @@
 #define OVERSEER_WASM_SRC_SYSTEMS_AI_INTERESTMAP_H_
 #include "Includes.h"
 #include "core/Math.h"
-#include "core/Influence.h"
 #include "components/Components.h"
 #include "core/Structures.h"
+#include "CreepProx.h"
+#include "CreepThreat.h"
+#include "ProxIMAP.h"
+#include "ThreatIMAP.h"
 
-namespace Overseer::Systems::AI
+namespace Overseer::Core::Influence
 {
     enum struct InfluenceType
     {
@@ -20,13 +23,13 @@ namespace Overseer::Systems::AI
         FriendlyThreat,
         EnemyProx,
         EnemyThreat,
-        SquadLeaderMovementMap
+        LeaderMovement
     };
 
     enum struct InterestType
     {
         Proximity,
-        MovementMap
+        Movement
     };
 
     enum struct InterestRange
@@ -68,7 +71,7 @@ namespace Overseer::Systems::AI
         // }
     };
 
-    class InterestMap : public Core::LocalMap
+    class InterestMap : public LocalMap
     {
       public:
         float Interest[INTEREST_SIZE] = { 0 };
@@ -77,35 +80,35 @@ namespace Overseer::Systems::AI
         InterestTemplate InterestTemplates[2][8];
         InfluenceCache   InfluenceCaches[7];
 
-        CreepProxIMAP            MyProxIMAP;
-        CreepThreatIMAP          MyThreatIMAP;
-        CreepMovementMap         MyMovementMap;
-        CreepMovementMap         SquadLeaderMovementMap;
-        Core::FriendlyProxIMAP   FriendlyProxIMAP;
-        Core::FriendlyThreatIMAP FriendlyThreatIMAP;
-        Core::EnemyProxIMAP      EnemyProxIMAP;
-        Core::EnemyThreatIMAP    EnemyThreatIMAP;
-        Core::NavMap             NavMap;
+        CreepProx          MyProx;
+        CreepThreat        MyThreat;
+        CreepMovement      MyMovement;
+        CreepMovement      LeaderMovement;
+        FriendlyProxIMAP   FriendlyProx;
+        FriendlyThreatIMAP FriendlyThreat;
+        EnemyProxIMAP      EnemyProx;
+        EnemyThreatIMAP    EnemyThreat;
+        Core::NavMap       NavMap;
 
       public:
-        InterestMap(int2                            center,
-                    const CreepProxIMAP&            myProxIMAP,
-                    const CreepThreatIMAP&          myThreatIMAP,
-                    const CreepMovementMap&         myMovementMap,
-                    const CreepMovementMap&         squadLeaderMovementMap,
-                    const Core::FriendlyProxIMAP&   friendlyProxIMAP,
-                    const Core::FriendlyThreatIMAP& friendlyThreatIMAP,
-                    const Core::EnemyProxIMAP&      enemyProxIMAP,
-                    const Core::EnemyThreatIMAP&    enemyThreatIMAP,
-                    const Core::NavMap&             navMap):
-            MyProxIMAP(myProxIMAP),
-            MyThreatIMAP(myThreatIMAP),
-            MyMovementMap(myMovementMap),
-            SquadLeaderMovementMap(squadLeaderMovementMap),
-            FriendlyProxIMAP(friendlyProxIMAP),
-            FriendlyThreatIMAP(friendlyThreatIMAP),
-            EnemyProxIMAP(enemyProxIMAP),
-            EnemyThreatIMAP(enemyThreatIMAP),
+        InterestMap(int2                             center,
+                    const CreepProx&                 myProx,
+                    const CreepThreat&               myThreat,
+                    const CreepMovement&             myMovement,
+                    const CreepMovement&             leaderMovement,
+                    const struct FriendlyProxIMAP&   friendlyProx,
+                    const struct FriendlyThreatIMAP& friendlyThreat,
+                    const struct EnemyProxIMAP&      enemyProx,
+                    const struct EnemyThreatIMAP&    enemyThreat,
+                    const Core::NavMap&              navMap):
+            MyProx(myProx),
+            MyThreat(myThreat),
+            MyMovement(myMovement),
+            LeaderMovement(leaderMovement),
+            FriendlyProx(friendlyProx),
+            FriendlyThreat(friendlyThreat),
+            EnemyProx(enemyProx),
+            EnemyThreat(enemyThreat),
             NavMap(navMap)
         {
             ClampAndSetBounds(center, INTEREST_RADIUS, INTEREST_WIDTH);
@@ -362,38 +365,38 @@ namespace Overseer::Systems::AI
             {
                 case InfluenceType::MyProx:
                     // cache.Influence = new float[INTEREST_SIZE] { 0 };
-                    CopyFromProxMap(MyProxIMAP, cache.Influence);
+                    CopyFromProxMap(MyProx, cache.Influence);
                     break;
                 case InfluenceType::MyThreat:
                     // cache.Influence = new float[INTEREST_SIZE] { 0 };
-                    CopyFromThreatMap(MyThreatIMAP, cache.Influence);
+                    CopyFromThreatMap(MyThreat, cache.Influence);
                     break;
                 case InfluenceType::FriendlyProx:
                     // cache.Influence = new float[INTEREST_SIZE];
-                    CopyFromIMAP(FriendlyProxIMAP, cache.Influence);
+                    CopyFromIMAP(FriendlyProx, cache.Influence);
                     break;
                 case InfluenceType::FriendlyThreat:
                     // cache.Influence = new float[INTEREST_SIZE];
-                    CopyFromIMAP(FriendlyThreatIMAP, cache.Influence);
+                    CopyFromIMAP(FriendlyThreat, cache.Influence);
                     break;
                 case InfluenceType::EnemyProx:
                     // cache.Influence = new float[INTEREST_SIZE];
-                    CopyFromIMAP(EnemyProxIMAP, cache.Influence);
+                    CopyFromIMAP(EnemyProx, cache.Influence);
                     break;
                 case InfluenceType::EnemyThreat:
                     // cache.Influence = new float[INTEREST_SIZE];
-                    CopyFromIMAP(EnemyThreatIMAP, cache.Influence);
+                    CopyFromIMAP(EnemyThreat, cache.Influence);
                     break;
-                case InfluenceType::SquadLeaderMovementMap:
+                case InfluenceType::LeaderMovement:
                     // cache.Influence = new float[INTEREST_SIZE] { 0 };
-                    CopyFromMovementMap(SquadLeaderMovementMap, cache.Influence);
+                    CopyFromMovementMap(LeaderMovement, cache.Influence);
                     break;
             }
 
             return cache;
         }
 
-        void CopyFromIMAP(Core::IMAP& imap, float* influence)
+        void CopyFromIMAP(IMAP& imap, float* influence)
         {
             int worldIndex = WorldStartIndex;
             int localIndex = LocalStartIndex;
@@ -423,28 +426,28 @@ namespace Overseer::Systems::AI
             // printf("} \n");
         }
 
-        void CopyFromProxMap(CreepProxIMAP& proxIMAP, float* influence)
+        void CopyFromProxMap(CreepProx& prox, float* influence)
         {
             // NOTE MyProxMap is always centered on same location and contained within the interest map
 
-            int interestIndex = PosToIndex(proxIMAP.WorldStart - WorldStart, INTEREST_WIDTH) + LocalStartIndex;
-            int proxIndex     = proxIMAP.LocalStartIndex;
+            int interestIndex = PosToIndex(prox.WorldStart - WorldStart, INTEREST_WIDTH) + LocalStartIndex;
+            int proxIndex     = prox.LocalStartIndex;
 
-            int width              = proxIMAP.LocalEnd.x - proxIMAP.LocalStart.x;
+            int width              = prox.LocalEnd.x - prox.LocalStart.x;
             int interestYIncrement = INTEREST_WIDTH - width;
             int proxYIncrement     = INFLUENCE_PROX_WIDTH - width;
 
             // printf("CopyFromProxMap: { ");
-            for (int y = proxIMAP.LocalStart.y; y < proxIMAP.LocalEnd.y; ++y)
+            for (int y = prox.LocalStart.y; y < prox.LocalEnd.y; ++y)
             {
-                for (int x = proxIMAP.LocalStart.x; x < proxIMAP.LocalEnd.x; ++x)
+                for (int x = prox.LocalStart.x; x < prox.LocalEnd.x; ++x)
                 {
 #ifdef DEBUG_ENABLED
                     if (interestIndex < 0 || interestIndex >= INTEREST_SIZE || proxIndex < 0 ||
                         proxIndex >= INFLUENCE_PROX_SIZE)
                         printf("[WASM] ERROR: InterestMap::CopyFromProxMap - OUT OF RANGE\n");
 #endif
-                    float inf                = proxIMAP.Influence[proxIndex];
+                    float inf                = prox.Influence[proxIndex];
                     influence[interestIndex] = inf;
                     // printf("Inf: %f, ", inf);
                     interestIndex++;
@@ -456,27 +459,27 @@ namespace Overseer::Systems::AI
             // printf("} \n");
         };
 
-        void CopyFromThreatMap(CreepThreatIMAP& threatIMAP, float* influence)
+        void CopyFromThreatMap(CreepThreat& threat, float* influence)
         {
             // NOTE MyThreatMap is always centered on same location and contained within the interest map
-            int interestIndex = PosToIndex(threatIMAP.WorldStart - WorldStart, INTEREST_WIDTH) + LocalStartIndex;
-            int threatIndex   = threatIMAP.LocalStartIndex;
+            int interestIndex = PosToIndex(threat.WorldStart - WorldStart, INTEREST_WIDTH) + LocalStartIndex;
+            int threatIndex   = threat.LocalStartIndex;
 
-            int width              = threatIMAP.LocalEnd.x - threatIMAP.LocalStart.x;
+            int width              = threat.LocalEnd.x - threat.LocalStart.x;
             int interestYIncrement = INTEREST_WIDTH - width;
             int threatYIncrement   = INFLUENCE_THREAT_WIDTH - width;
 
             // printf("CopyFromThreatMap: { ");
-            for (int y = threatIMAP.LocalStart.y; y < threatIMAP.LocalEnd.y; ++y)
+            for (int y = threat.LocalStart.y; y < threat.LocalEnd.y; ++y)
             {
-                for (int x = threatIMAP.LocalStart.x; x < threatIMAP.LocalEnd.x; ++x)
+                for (int x = threat.LocalStart.x; x < threat.LocalEnd.x; ++x)
                 {
 #ifdef DEBUG_ENABLED
                     if (interestIndex < 0 || interestIndex >= INTEREST_SIZE || threatIndex < 0 ||
                         threatIndex >= INFLUENCE_THREAT_SIZE)
                         printf("[WASM] ERROR: InterestMap::CopyFromThreatMap - OUT OF RANGE\n");
 #endif
-                    float inf                = threatIMAP.Influence[threatIndex];
+                    float inf                = threat.Influence[threatIndex];
                     influence[interestIndex] = inf;
                     // printf("Inf: %f, ", inf);
                     interestIndex++;
@@ -488,14 +491,13 @@ namespace Overseer::Systems::AI
             // printf("} \n");
         };
 
-        void CopyFromMovementMap(CreepMovementMap& movementMap, float* influence)
+        void CopyFromMovementMap(CreepMovement& movement, float* influence)
         {
-            int2 worldStart = max(movementMap.WorldStart, WorldStart);
-            int2 worldEnd   = min(movementMap.WorldEnd, WorldEnd);
+            int2 worldStart = max(movement.WorldStart, WorldStart);
+            int2 worldEnd   = min(movement.WorldEnd, WorldEnd);
 
             int interestIndex = PosToIndex(worldStart - WorldStart, INTEREST_WIDTH) + LocalStartIndex;
-            int movementIndex =
-                PosToIndex(worldStart - movementMap.WorldStart, INTEREST_WIDTH) + movementMap.LocalStartIndex;
+            int movementIndex = PosToIndex(worldStart - movement.WorldStart, INTEREST_WIDTH) + movement.LocalStartIndex;
 
             int width      = worldEnd.x - worldStart.x;
             int yIncrement = INTEREST_WIDTH - width;
@@ -521,7 +523,7 @@ namespace Overseer::Systems::AI
                         movementIndex >= INTEREST_SIZE)
                         printf("[WASM] ERROR: InterestMap::CopyFromMovementMap - OUT OF RANGE\n");
 #endif
-                    int   cost = movementMap.Nodes[movementIndex].Cost;
+                    int   cost = movement.Nodes[movementIndex].Cost;
                     float inf  = CalculateInverseLinearInfluence(1.0f, cost, INTEREST_RADIUS + 1);
                     // printf("{ InterestIndex: %i, MovementIndex: %i, Inf: %f }, ", interestIndex, movementIndex, inf);
 
@@ -554,11 +556,11 @@ namespace Overseer::Systems::AI
                 case InterestType::Proximity:
                     CreateProximityTemplate(temp.Influence, range);
                     break;
-                case InterestType::MovementMap:
+                case InterestType::Movement:
                     if ((int)range == INTEREST_RADIUS)
-                        CreateMovementMapTemplate(MyMovementMap, temp.Influence);
+                        CreateMovementTemplate(MyMovement, temp.Influence);
                     else
-                        CreateMovementMapTemplate(MyMovementMap, temp.Influence, range);
+                        CreateMovementTemplate(MyMovement, temp.Influence, range);
                     break;
             }
 
@@ -599,11 +601,11 @@ namespace Overseer::Systems::AI
             // printf("} \n");
         }
 
-        void CreateMovementMapTemplate(CreepMovementMap& movementMap, float* influence)
+        void CreateMovementTemplate(CreepMovement& movement, float* influence)
         {
             for (int i = 0; i < INTEREST_SIZE; ++i)
             {
-                int   cost   = movementMap.Nodes[i].Cost;
+                int   cost   = movement.Nodes[i].Cost;
                 float inf    = CalculateInverseLinearInfluence(1.0f, cost, INTEREST_RADIUS + 1);
                 // Turns 0 -> distance into 1 -> 0
                 // printf("%f", inf);
@@ -611,16 +613,16 @@ namespace Overseer::Systems::AI
             }
         }
 
-        void CreateMovementMapTemplate(CreepMovementMap& movementMap, float* influence, InterestRange range)
+        void CreateMovementTemplate(CreepMovement& movement, float* influence, InterestRange range)
         {
             float maxDist = (float)range;
             for (int i = 0; i < INTEREST_SIZE; ++i)
             {
-                int cost     = movementMap.Nodes[i].Cost;
+                int cost     = movement.Nodes[i].Cost;
                 // Turns 0 -> distance into 1 -> 0
                 influence[i] = CalculateInverseLinearInfluence(1.0f, cost, maxDist + 1);
             }
         }
     };
-} // namespace Overseer::Systems::AI
+} // namespace Overseer::Core::Influence
 #endif // OVERSEER_WASM_SRC_SYSTEMS_AI_INTERESTMAP_H_

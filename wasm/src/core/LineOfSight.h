@@ -18,7 +18,7 @@ namespace Overseer::Core
       public:
         LineOfSight(struct TerrainMap& terrainMap);
 
-        void CalculateLOS(CreepThreatIMAP& threatIMAP, int* los);
+        void CalculateLOS(int2 worldCenter, int2 worldStart, int2 worldEnd, int* los);
 
       private:
         struct Row;

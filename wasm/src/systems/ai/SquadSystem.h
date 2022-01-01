@@ -6,8 +6,8 @@
 #define OVERSEER_WASM_SRC_SYSTEMS_AI_SQUADSYSTEM_H_
 #include "systems/SystemBase.h"
 #include "components/Components.h"
-#include "core/Influence.h"
 #include "core/Utility.h"
+#include "core/Influence/InterestMap.h"
 
 namespace Overseer::Systems::AI
 {
@@ -22,8 +22,7 @@ namespace Overseer::Systems::AI
         void Update(entt::registry& registry) override
         {
             auto friendlyCreeps =
-                registry.view<My, Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat, Path>(
-                    entt::exclude<SquadLeader>);
+                registry.view<My, Pos, CreepProx, CreepThreat, CreepMovement, Threat, Path>(entt::exclude<SquadLeader>);
 
             auto squads = registry.view<Squad>();
 
@@ -32,16 +31,15 @@ namespace Overseer::Systems::AI
 
             auto pathfinder = registry.ctx<Core::Pathfinder>();
             auto squadLeaders =
-                registry.view<My, SquadLeader, Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat, Path>();
+                registry.view<My, SquadLeader, Pos, CreepProx, CreepThreat, CreepMovement, Threat, Path>();
 
             printf("[WASM] GruntSystem: Running squad leaders...\n");
             for (auto entity : squadLeaders)
             {
-                auto [squadLeader, pos, proxIMAP, threatIMAP, movementMap, threat, path] = squadLeaders.get(entity);
-                auto goal = int2(90, 90);
+                auto [squadLeader, pos, prox, threat, movementMap, myThreat, path] = squadLeaders.get(entity);
+                auto goal                                                          = int2(90, 90);
                 pathfinder.FindPath(pos.Val, goal, path);
 
-                // Currently just beeling
                 Core::MovementCoster::GetPath(
                     PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(path.Val[0], MAP_WIDTH), movementMap, path);
 
@@ -73,8 +71,7 @@ namespace Overseer::Systems::AI
         void SelectSquadLeader(entt::registry& registry)
         {
             auto friendlyCreeps =
-                registry.view<My, Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat, Path>(
-                    entt::exclude<SquadLeader>);
+                registry.view<My, Pos, CreepProx, CreepThreat, CreepMovement, Threat, Path>(entt::exclude<SquadLeader>);
 
             auto squads = registry.view<Squad>();
 

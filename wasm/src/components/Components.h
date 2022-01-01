@@ -6,7 +6,6 @@
 #define OVERSEER_WASM_SRC_COMPONENTS_COMPONENTS_H_
 #include "Includes.h"
 #include "core/Navigation.h"
-#include "core/Influence.h"
 #include "entt.hpp"
 
 namespace Overseer::Components
@@ -171,21 +170,6 @@ namespace Overseer::Components
         {
             Count = 0;
         }
-    };
-
-    struct CreepProxIMAP : Core::LocalMap
-    {
-        float* Influence = new float[INFLUENCE_PROX_SIZE];
-    };
-
-    struct CreepThreatIMAP : Core::LocalMap
-    {
-        float* Influence = new float[INFLUENCE_THREAT_SIZE];
-    };
-
-    struct CreepMovementMap : Core::LocalMap
-    {
-        Core::Node* Nodes = new Core::Node[INTEREST_SIZE + 1];
     };
 
     struct Squad

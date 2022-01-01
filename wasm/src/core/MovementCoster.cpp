@@ -15,22 +15,22 @@ namespace Overseer::Core
         PriorityQueue = Overseer::Core::PriorityQueue<int, QueueNode>();
     }
 
-    void MovementCoster::Update(CreepMovementMap& creepMovementMap)
+    void MovementCoster::Update(Influence::CreepMovement& movement)
     {
-        memcpy(creepMovementMap.Nodes, BlankNodeSet, sizeof(Node) * (INTEREST_SIZE + 1));
-        Update(NavigationMap, creepMovementMap, PriorityQueue);
+        memcpy(movement.Nodes, BlankNodeSet, sizeof(Node) * (INTEREST_SIZE + 1));
+        Update(NavigationMap, movement, PriorityQueue);
         PriorityQueue.Clear();
     }
 
     void MovementCoster::Update(NavMap&                              navMap,
-                                CreepMovementMap&                    movementMap,
+                                Influence::CreepMovement&            movement,
                                 Core::PriorityQueue<int, QueueNode>& openSet)
     {
-        // int centerIndex = PosToIndex(movementMap.WorldCenter, MAP_WIDTH);
+        // int centerIndex = PosToIndex(movement.WorldCenter, MAP_WIDTH);
 
-        // int2 centerStartUnclamped = movementMap.WorldCenter - 1;
+        // int2 centerStartUnclamped = movement.WorldCenter - 1;
         // int2 centerStart          = max(centerStartUnclamped, 0);
-        // int2 centerEnd            = min(movementMap.WorldCenter + 2, MAP_WIDTH);
+        // int2 centerEnd            = min(movement.WorldCenter + 2, MAP_WIDTH);
 
         // int2 offset   = centerStart - centerStartUnclamped;
         // int2 infStart = INTEREST_CENTER - 1 + offset;
@@ -44,20 +44,20 @@ namespace Overseer::Core
 
         // printf(
         //     "WorldCenter: { %i, %i }    WorldStart: { %i, %i }    WorldEnd: { %i, %i }   WorldStartIndex: % i    LocalCenter: { %i, %i }    LocalStart: { %i, %i }    LocalEnd: { %i, %i }   LocalStartIndex: % i\n",
-        //     movementMap.WorldCenter.x,
-        //     movementMap.WorldCenter.y,
-        //     movementMap.WorldStart.x,
-        //     movementMap.WorldStart.y,
-        //     movementMap.WorldEnd.x,
-        //     movementMap.WorldEnd.y,
-        //     movementMap.WorldStartIndex,
-        //     movementMap.LocalCenter.x,
-        //     movementMap.LocalCenter.y,
-        //     movementMap.LocalStart.x,
-        //     movementMap.LocalStart.y,
-        //     movementMap.LocalEnd.x,
-        //     movementMap.LocalEnd.y,
-        //     movementMap.LocalStartIndex);
+        //     movement.WorldCenter.x,
+        //     movement.WorldCenter.y,
+        //     movement.WorldStart.x,
+        //     movement.WorldStart.y,
+        //     movement.WorldEnd.x,
+        //     movement.WorldEnd.y,
+        //     movement.WorldStartIndex,
+        //     movement.LocalCenter.x,
+        //     movement.LocalCenter.y,
+        //     movement.LocalStart.x,
+        //     movement.LocalStart.y,
+        //     movement.LocalEnd.x,
+        //     movement.LocalEnd.y,
+        //     movement.LocalStartIndex);
 
         // printf("Offset: { %i, %i }\n", offset.x, offset.y);
         // printf(
@@ -83,7 +83,7 @@ namespace Overseer::Core
         //     {
         //         if (navMap.Map[mapIndex] != INT_MAXVALUE)
         //         {
-        //             movementMap.Nodes[infIndex] = Node(centerIndex, 0);
+        //             movement.Nodes[infIndex] = Node(centerIndex, 0);
         //
         //             if (mapIndex != centerIndex)
         //                 openSet.Push(0, QueueNode(mapIndex, 0));
@@ -95,18 +95,18 @@ namespace Overseer::Core
         //     infIndex += infYIncrement;
         // }
 
-        movementMap.Nodes[movementMap.LocalCenterIndex] = Node(movementMap.WorldCenterIndex, 0);
-        openSet.Push(0, QueueNode(movementMap.WorldCenterIndex, 0));
+        movement.Nodes[movement.LocalCenterIndex] = Node(movement.WorldCenterIndex, 0);
+        openSet.Push(0, QueueNode(movement.WorldCenterIndex, 0));
 
         while (!openSet.Empty())
         {
             const QueueNode current = openSet.Pop();
 
             int2 currWorldPos = IndexToPos(current.Index, MAP_WIDTH);
-            int2 currInfPos   = currWorldPos - (movementMap.WorldCenter - INTEREST_RADIUS);
+            int2 currInfPos   = currWorldPos - (movement.WorldCenter - INTEREST_RADIUS);
             int  currInfIndex = PosToIndex(currInfPos, INTEREST_WIDTH);
 
-            auto visitedNode = movementMap.Nodes[currInfIndex];
+            auto visitedNode = movement.Nodes[currInfIndex];
 
             if (visitedNode.Cost < current.CostSoFar)
                 continue;
@@ -127,7 +127,7 @@ namespace Overseer::Core
                               currInfPos,
                               current.Index,
                               visitedNode.Cost,
-                              movementMap,
+                              movement,
                               openSet,
                               CardinalOffsetsSIMD);
             ProcessDirections(navMap,
@@ -135,7 +135,7 @@ namespace Overseer::Core
                               currInfPos,
                               current.Index,
                               visitedNode.Cost,
-                              movementMap,
+                              movement,
                               openSet,
                               DiagonalOffsetsSIMD);
         }
@@ -146,15 +146,14 @@ namespace Overseer::Core
                                            int2&                                currInfPos,
                                            int                                  index,
                                            int                                  parentCost,
-                                           CreepMovementMap&                    creepMovementMap,
+                                           Influence::CreepMovement&            movement,
                                            Core::PriorityQueue<int, QueueNode>& openSet,
                                            int4x2                               offsets)
     {
         int4x2 currentWorldPositions = int4x2(int4(currWorldPos.x), int4(currWorldPos.y)) + offsets;
-        int4   isWorldPosInbounds =
-            IsPosInboundsSIMD(currentWorldPositions, creepMovementMap.WorldStart, creepMovementMap.WorldEnd);
-        int4 currentWorldIndexes = PosToIndexSIMD(currentWorldPositions, MAP_WIDTH);
-        currentWorldIndexes      = clamp(currentWorldIndexes, 0, MAP_SIZE - 1);
+        int4   isWorldPosInbounds    = IsPosInboundsSIMD(currentWorldPositions, movement.WorldStart, movement.WorldEnd);
+        int4   currentWorldIndexes   = PosToIndexSIMD(currentWorldPositions, MAP_WIDTH);
+        currentWorldIndexes          = clamp(currentWorldIndexes, 0, MAP_SIZE - 1);
 
         // printf(
         //     "        CurrentWorldPostions: {{ %i, %i }, { %i, %i }, { %i, %i } { %i, %i }   IsPosInbounds: { %i, %i, %i, %i }    CurrentWorldIndexes: { %i, %i, %i, %i }\n",
@@ -203,10 +202,10 @@ namespace Overseer::Core
         //     currentInfIndexes.z,
         //     currentInfIndexes.w);
 
-        int4 prevCostSoFar = int4(creepMovementMap.Nodes[currentInfIndexes.x].Cost,
-                                  creepMovementMap.Nodes[currentInfIndexes.y].Cost,
-                                  creepMovementMap.Nodes[currentInfIndexes.z].Cost,
-                                  creepMovementMap.Nodes[currentInfIndexes.w].Cost);
+        int4 prevCostSoFar = int4(movement.Nodes[currentInfIndexes.x].Cost,
+                                  movement.Nodes[currentInfIndexes.y].Cost,
+                                  movement.Nodes[currentInfIndexes.z].Cost,
+                                  movement.Nodes[currentInfIndexes.w].Cost);
 
         bool4 isBetterRoute = less(costSoFar, prevCostSoFar);
         // printf("        IsBetterRoute: { %i, %i, %i, %i }\n",
@@ -223,10 +222,10 @@ namespace Overseer::Core
         // printf("        IsTileValid: { %i, %i, %i, %i }\n", isTileValid.x, isTileValid.y, isTileValid.z, isTileValid.w);
         // printf("        CostSoFar: { %i, %i, %i, %i }\n", costSoFar.x, costSoFar.y, costSoFar.z, costSoFar.w);
 
-        creepMovementMap.Nodes[currentInfIndexes.x] = Node(index, costSoFar.x);
-        creepMovementMap.Nodes[currentInfIndexes.y] = Node(index, costSoFar.y);
-        creepMovementMap.Nodes[currentInfIndexes.z] = Node(index, costSoFar.z);
-        creepMovementMap.Nodes[currentInfIndexes.w] = Node(index, costSoFar.w);
+        movement.Nodes[currentInfIndexes.x] = Node(index, costSoFar.x);
+        movement.Nodes[currentInfIndexes.y] = Node(index, costSoFar.y);
+        movement.Nodes[currentInfIndexes.z] = Node(index, costSoFar.z);
+        movement.Nodes[currentInfIndexes.w] = Node(index, costSoFar.w);
 
         if (isTileValid.x)
             openSet.Push(costSoFar.x, QueueNode(currentWorldIndexes.x, costSoFar.x));
@@ -238,21 +237,21 @@ namespace Overseer::Core
             openSet.Push(costSoFar.w, QueueNode(currentWorldIndexes.w, costSoFar.w));
     }
 
-    void MovementCoster::GetPath(int startIndex, int goalIndex, CreepMovementMap& movementMap, Path& path)
+    void MovementCoster::GetPath(int startIndex, int goalIndex, Influence::CreepMovement& movement, Path& path)
     {
-        // int worldIndex = movementMap.WorldStartIndex;
-        // int localIndex = movementMap.LocalStartIndex;
+        // int worldIndex = movement.WorldStartIndex;
+        // int localIndex = movement.LocalStartIndex;
         //
-        // int width           = movementMap.LocalEnd.x - movementMap.LocalStart.x;
+        // int width           = movement.LocalEnd.x - movement.LocalStart.x;
         // int worldYIncrement = MAP_WIDTH - width;
         // int localYIncrement = INTEREST_WIDTH - width;
         //
         // printf("CosterGetPath: { ");
-        // for (int y = movementMap.LocalStart.y; y < movementMap.LocalEnd.y; ++y)
+        // for (int y = movement.LocalStart.y; y < movement.LocalEnd.y; ++y)
         // {
-        //     for (int x = movementMap.LocalStart.x; x < movementMap.LocalEnd.x; ++x)
+        //     for (int x = movement.LocalStart.x; x < movement.LocalEnd.x; ++x)
         //     {
-        //         int  cameFrom    = movementMap.Nodes[localIndex].CameFrom;
+        //         int  cameFrom    = movement.Nodes[localIndex].CameFrom;
         //         int2 cameFromPos = IndexToPos(cameFrom, MAP_WIDTH);
         //         printf("{ WorldIndex: %i, LocalIndex: %i, CameFromIndex: %i, CameFromPos: { %i, %i } }, ",
         //                worldIndex,
@@ -281,9 +280,9 @@ namespace Overseer::Core
             // TODO optimise this by just determine direction of movement rather than recalculating?
             reversePathArray[pathIndex++] = currentIndex;
             currentWorldPos               = IndexToPos(currentIndex, MAP_WIDTH);
-            int currentLocalIndex = PosToIndex(WorldToLocal(currentWorldPos, movementMap.WorldStart), INTEREST_WIDTH) +
-                                    movementMap.LocalStartIndex;
-            auto node    = movementMap.Nodes[currentLocalIndex];
+            int currentLocalIndex = PosToIndex(WorldToLocal(currentWorldPos, movement.WorldStart), INTEREST_WIDTH) +
+                                    movement.LocalStartIndex;
+            auto node    = movement.Nodes[currentLocalIndex];
             // printf("Path: %i    WorldIndex: %i    CameFrom: %i    CurrentLocalIndex: %i\n",
             //        pathIndex - 1,
             //        currentIndex,

@@ -7,7 +7,7 @@
 #include "Includes.h"
 #include "core/Math.h"
 
-namespace Overseer::Systems::Influence
+namespace Overseer::Core::Influence
 {
     struct InfluencePrecomputes
     {

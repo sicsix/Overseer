@@ -6,11 +6,11 @@
 #define OVERSEER_WASM_SRC_SYSTEMS_AI_GRUNTSYSTEM_H_
 #include "systems/SystemBase.h"
 #include "components/Components.h"
-#include "core/Influence.h"
 #include "commands/CommandHandler.h"
 #include "core/Math.h"
 #include "core/MovementCoster.h"
-#include "InterestMap.h"
+#include "core/Influence/Influence.h"
+#include "core/Influence/InterestMap.h"
 #include "core/Pathfinder.h"
 
 namespace Overseer::Systems::AI
@@ -24,36 +24,36 @@ namespace Overseer::Systems::AI
 
         void Update(entt::registry& registry) override
         {
+            auto friendlyProx   = registry.ctx<FriendlyProxIMAP>();
+            auto friendlyThreat = registry.ctx<FriendlyThreatIMAP>();
+            auto enemyProx      = registry.ctx<EnemyProxIMAP>();
+            auto enemyThreat    = registry.ctx<EnemyThreatIMAP>();
+
             auto navMap         = registry.ctx<Core::NavMap>();
-            auto friendlyProx   = registry.ctx<Core::FriendlyProxIMAP>();
-            auto friendlyThreat = registry.ctx<Core::FriendlyThreatIMAP>();
-            auto enemyProx      = registry.ctx<Core::EnemyProxIMAP>();
-            auto enemyThreat    = registry.ctx<Core::EnemyThreatIMAP>();
+            auto movementCoster = registry.ctx<Core::MovementCoster>();
             auto pathfinder     = registry.ctx<Core::Pathfinder>();
 
             auto friendlyCreeps =
-                registry.view<My, Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat, Path>(
-                    entt::exclude<SquadLeader>);
+                registry.view<My, Pos, CreepProx, CreepThreat, CreepMovement, Threat, Path>(entt::exclude<SquadLeader>);
 
-            auto grunts =
-                registry.view<My, SquadRef, Pos, CreepProxIMAP, CreepThreatIMAP, CreepMovementMap, Threat, Path>(
-                    entt::exclude<SquadLeader>);
+            auto grunts = registry.view<My, SquadRef, Pos, CreepProx, CreepThreat, CreepMovement, Threat, Path>(
+                entt::exclude<SquadLeader>);
 
             for (auto entity : grunts)
             {
                 // if (entity != (entt::entity)10)
                 //     continue;
 
-                auto [squadRef, pos, proxIMAP, threatIMAP, movementMap, threat, path] = grunts.get(entity);
+                auto [squadRef, pos, prox, threat, movement, myThreat, path] = grunts.get(entity);
 
                 auto squadLeader            = squadRef.SquadLeader;
-                auto squadLeaderMovementMap = registry.get<CreepMovementMap>(squadLeader);
+                auto squadLeaderMovementMap = registry.get<CreepMovement>(squadLeader);
 
                 // TODO get SL movement map
                 auto interestMap = InterestMap(pos.Val,
-                                               proxIMAP,
-                                               threatIMAP,
-                                               movementMap,
+                                               prox,
+                                               threat,
+                                               movement,
                                                squadLeaderMovementMap,
                                                friendlyProx,
                                                friendlyThreat,
@@ -64,22 +64,22 @@ namespace Overseer::Systems::AI
                 // interestMap.Add(InfluenceType::FriendlyProx, 1.0f);
                 // interestMap.Add(InfluenceType::MyProx, -1.0f);
                 // interestMap.NormaliseAndInvert();
-                // interestMap.ApplyInterestTemplate(InterestType::MovementMap);
+                // interestMap.ApplyInterestTemplate(InterestType::Movement);
                 // int2 target = interestMap.GetHighestPos();
 
                 // Mostly working
-                // interestMap.Add(InfluenceType::SquadLeaderMovementMap, 2.0f);
+                // interestMap.Add(InfluenceType::LeaderMovement, 2.0f);
                 // interestMap.Add(InfluenceType::FriendlyProx, -1.0f);
                 // interestMap.Add(InfluenceType::MyProx, 1.0f);
                 // interestMap.Normalise();
-                // interestMap.ApplyInterestTemplate(InterestType::MovementMap);
+                // interestMap.ApplyInterestTemplate(InterestType::Movement);
                 // int2 target = interestMap.GetHighestPos();
 
                 interestMap.Add(InfluenceType::FriendlyProx, 1.0f);
                 interestMap.Add(InfluenceType::MyProx, -1.0f);
                 interestMap.NormaliseAndInvert();
-                interestMap.Multiply(InfluenceType::SquadLeaderMovementMap, 2.0f);
-                interestMap.ApplyInterestTemplate(InterestType::MovementMap);
+                interestMap.Multiply(InfluenceType::LeaderMovement, 2.0f);
+                interestMap.ApplyInterestTemplate(InterestType::Movement);
                 int2 target = interestMap.GetHighestPos();
 
                 if (entity == (entt::entity)10)
@@ -89,11 +89,11 @@ namespace Overseer::Systems::AI
                 if (target.x != -1 && target != pos.Val)
                 {
                     Core::MovementCoster::GetPath(
-                        PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(target, MAP_WIDTH), movementMap, path);
+                        PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(target, MAP_WIDTH), movement, path);
                 }
 
                 // TODO get travel direction and update proximity map with new position
-                // TODO potentially update threat map too?
+                // TODO potentially update myThreat map too?
             }
         }
 

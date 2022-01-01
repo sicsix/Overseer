@@ -130,7 +130,7 @@ namespace Overseer::Core
         return int2(2 * tile.Column - 1, 2 * tile.RowDepth);
     }
 
-    void LineOfSight::CalculateLOS(CreepThreatIMAP& threatIMAP, int* los)
+    void LineOfSight::CalculateLOS(int2 worldCenter, int2 worldStart, int2 worldEnd, int* los)
     {
         memset(los, 0, sizeof(int) * INFLUENCE_THREAT_SIZE);
 
@@ -143,7 +143,7 @@ namespace Overseer::Core
         int currRowIndex = 0;
         for (int i = 1; i < 9; i += 2)
         {
-            auto quadrant        = Quadrant((Direction)i, threatIMAP.WorldCenter);
+            auto quadrant        = Quadrant((Direction)i, worldCenter);
             rows[currRowIndex++] = Row(1, int2(-1, 1), int2(1, 1));
             // printf("Direction: %i\n", i);
             while (currRowIndex > 0)
@@ -163,7 +163,7 @@ namespace Overseer::Core
                 {
                     auto tile     = enumerator.Current();
                     auto worldPos = quadrant.Transform(tile);
-                    if (!IsPosInbounds(worldPos, threatIMAP.WorldStart, threatIMAP.WorldEnd))
+                    if (!IsPosInbounds(worldPos, worldStart, worldEnd))
                         continue;
                     auto worldIndex = PosToIndex(worldPos, MAP_WIDTH);
                     auto terrain    = (Terrain)TerrainMap.Map[worldIndex];
@@ -174,7 +174,7 @@ namespace Overseer::Core
 
                     if (IsSymmetric(row, tile) && IsFloor(terrain))
                     {
-                        auto infPos   = worldPos - (threatIMAP.WorldCenter - INFLUENCE_THREAT_RADIUS);
+                        auto infPos   = worldPos - (worldCenter - INFLUENCE_THREAT_RADIUS);
                         auto infIndex = PosToIndex(infPos, INFLUENCE_THREAT_WIDTH);
                         los[infIndex] = 1;
                     }
