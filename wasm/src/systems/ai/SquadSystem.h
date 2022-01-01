@@ -19,6 +19,8 @@ namespace Overseer::Systems::AI
         {
         }
 
+        int2 goal;
+
         void Update(entt::registry& registry) override
         {
             auto friendlyProx   = registry.ctx<FriendlyProxIMAP>();
@@ -58,10 +60,8 @@ namespace Overseer::Systems::AI
                         maxDist = dist;
                 }
 
-                if (maxDist < 12)
+                if (maxDist < 15)
                 {
-                    auto goal = int2(90, 90);
-
                     pathfinder.FindPath(pos.Val, goal, path);
 
                     int2 target = path.Val[0];
@@ -124,6 +124,12 @@ namespace Overseer::Systems::AI
             registry.emplace<Squad>(squadEntity, squad);
             registry.emplace<SquadLeader>(bestLeader, SquadLeader(squadEntity));
             printf("[WASM] Selected %i...\n", bestLeader);
+
+            //TODO temp hacks
+            int2 leaderPos = registry.get<Pos>(bestLeader).Val;
+            int distTopRight = DistanceChebyshev(leaderPos, int2(2, 2));
+            int distTopLeft =  DistanceChebyshev(leaderPos, int2(97, 97));
+            goal = distTopRight > distTopLeft ? int2(2, 2) : int2(97, 97);
         }
     };
 } // namespace Overseer::Systems::AI

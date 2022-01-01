@@ -75,18 +75,24 @@ namespace Overseer::Systems::AI
                 // interestMap.ApplyInterestTemplate(InterestType::Movement);
                 // int2 highestPos = interestMap.GetHighestPos();
 
+                // This is baking in the AI, we should process AI separately and use the interest maps to influence the decisions
+                // interestMap.Add(InfluenceType::FriendlyProx, 1.0f);
+                // interestMap.Add(InfluenceType::MyProx, -1.0f);
+                // interestMap.NormaliseAndInvert(0.75f, 1.0f);
+                // interestMap.Multiply(InfluenceType::LeaderMovement, 2.0f);
+                // interestMap.Add(InfluenceType::EnemyThreat, 1.0f);
+                // interestMap.ApplyInterestTemplate(InterestType::Movement);
+
                 interestMap.Add(InfluenceType::FriendlyProx, 1.0f);
                 interestMap.Add(InfluenceType::MyProx, -1.0f);
-                interestMap.NormaliseAndInvert(0.75f, 1.0f);
-                interestMap.Multiply(InfluenceType::LeaderMovement, 2.0f);
-                interestMap.Add(InfluenceType::EnemyThreat, 1.0f);
+                interestMap.NormaliseAndInvert(0.25f, 1.0f);
+                interestMap.Multiply(InfluenceType::LeaderMovement, 1.0f);
                 interestMap.ApplyInterestTemplate(InterestType::Movement);
                 int2 highestPos = interestMap.GetHighestPos();
 
                 if (entity == (entt::entity)10)
                     interestMap.DebugDraw(0.01f, INTEREST_SIZE);
 
-                // printf("ENTITY: %i    POS: { %i, %i }    TARGET: { %i, %i }\n", entity, pos.Val.x, pos.Val.y, highestPos.x, highestPos.y);
                 if (highestPos.x == -1 || highestPos == pos.Val)
                     continue;
 
@@ -94,6 +100,15 @@ namespace Overseer::Systems::AI
                     PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(highestPos, MAP_WIDTH), movement, path);
 
                 int2 target = path.Val[0];
+
+                printf("ENTITY: %i    POS: { %i, %i }    TARGET: { %i, %i }    HIGHESTPOS: { %i, %i }\n",
+                       entity,
+                       pos.Val.x,
+                       pos.Val.y,
+                       target.x,
+                       target.y,
+                       highestPos.x,
+                       highestPos.y);
 
                 friendlyProx.Subtract(prox);
                 friendlyThreat.Subtract(threat);

@@ -22,10 +22,10 @@ constexpr int  MAP_HEIGHT = 100;
 constexpr int  MAP_SIZE   = MAP_WIDTH * MAP_HEIGHT;
 constexpr int2 MAP_DIMENSIONS(MAP_WIDTH, MAP_HEIGHT);
 
-constexpr int  INFLUENCE_PROX_WIDTH         = 5;
+constexpr int  INFLUENCE_PROX_WIDTH         = 9;
 constexpr int  INFLUENCE_PROX_SIZE          = INFLUENCE_PROX_WIDTH * INFLUENCE_PROX_WIDTH;
 constexpr int  INFLUENCE_PROX_MAP_STEP_SIZE = MAP_WIDTH - INFLUENCE_PROX_WIDTH;
-constexpr int  INFLUENCE_PROX_RADIUS        = 2;
+constexpr int  INFLUENCE_PROX_RADIUS        = 4;
 constexpr int2 INFLUENCE_PROX_CENTER        = int2(INFLUENCE_PROX_RADIUS, INFLUENCE_PROX_RADIUS);
 
 constexpr int  INFLUENCE_THREAT_WIDTH         = 13;
