@@ -31,7 +31,7 @@ namespace Overseer::Systems::AI
 
             auto navMap         = registry.ctx<Core::NavMap>();
             auto movementCoster = registry.ctx<Core::MovementCoster>();
-            auto pathfinder     = registry.ctx<Core::Pathfinder>();
+            auto lineOfSight    = registry.ctx<Core::LineOfSight>();
 
             auto friendlyCreeps =
                 registry.view<My, Pos, CreepProx, CreepThreat, CreepMovement, Threat, Path>(entt::exclude<SquadLeader>);
@@ -65,7 +65,7 @@ namespace Overseer::Systems::AI
                 // interestMap.Add(InfluenceType::MyProx, -1.0f);
                 // interestMap.NormaliseAndInvert();
                 // interestMap.ApplyInterestTemplate(InterestType::Movement);
-                // int2 target = interestMap.GetHighestPos();
+                // int2 highestPos = interestMap.GetHighestPos();
 
                 // Mostly working
                 // interestMap.Add(InfluenceType::LeaderMovement, 2.0f);
@@ -73,66 +73,41 @@ namespace Overseer::Systems::AI
                 // interestMap.Add(InfluenceType::MyProx, 1.0f);
                 // interestMap.Normalise();
                 // interestMap.ApplyInterestTemplate(InterestType::Movement);
-                // int2 target = interestMap.GetHighestPos();
+                // int2 highestPos = interestMap.GetHighestPos();
 
                 interestMap.Add(InfluenceType::FriendlyProx, 1.0f);
                 interestMap.Add(InfluenceType::MyProx, -1.0f);
-                interestMap.NormaliseAndInvert();
+                interestMap.NormaliseAndInvert(0.75f, 1.0f);
                 interestMap.Multiply(InfluenceType::LeaderMovement, 2.0f);
+                interestMap.Add(InfluenceType::EnemyThreat, 1.0f);
                 interestMap.ApplyInterestTemplate(InterestType::Movement);
-                int2 target = interestMap.GetHighestPos();
+                int2 highestPos = interestMap.GetHighestPos();
 
                 if (entity == (entt::entity)10)
-                    DebugInterest(interestMap, 0.01f, INTEREST_SIZE);
+                    interestMap.DebugDraw(0.01f, INTEREST_SIZE);
 
-                // printf("ENTITY: %i    POS: { %i, %i }    TARGET: { %i, %i }\n", entity, pos.Val.x, pos.Val.y, target.x, target.y);
-                if (target.x != -1 && target != pos.Val)
-                {
-                    Core::MovementCoster::GetPath(
-                        PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(target, MAP_WIDTH), movement, path);
-                }
+                // printf("ENTITY: %i    POS: { %i, %i }    TARGET: { %i, %i }\n", entity, pos.Val.x, pos.Val.y, highestPos.x, highestPos.y);
+                if (highestPos.x == -1 || highestPos == pos.Val)
+                    continue;
 
-                // TODO get travel direction and update proximity map with new position
-                // TODO potentially update myThreat map too?
-            }
-        }
+                Core::MovementCoster::GetPath(
+                    PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(highestPos, MAP_WIDTH), movement, path);
 
-      private:
-        void DebugInterest(InterestMap interestMap, float minVal, int maxCount)
-        {
-            int worldIndex = interestMap.WorldStartIndex;
-            int localIndex = interestMap.LocalStartIndex;
+                int2 target = path.Val[0];
 
-            int width           = interestMap.LocalEnd.x - interestMap.LocalStart.x;
-            int worldYIncrement = MAP_WIDTH - width;
-            int localYIncrement = INTEREST_WIDTH - width;
+                friendlyProx.Subtract(prox);
+                friendlyThreat.Subtract(threat);
 
-            int count = 0;
-            for (int y = interestMap.LocalStart.y; y < interestMap.LocalEnd.y; ++y)
-            {
-                for (int x = interestMap.LocalStart.x; x < interestMap.LocalEnd.x; ++x)
-                {
-                    float interest = interestMap.Interest[localIndex];
-                    auto  pos      = (double2)IndexToPos(worldIndex, MAP_WIDTH);
+                movement.ClampAndSetBounds(target, INTEREST_RADIUS, INTEREST_WIDTH);
+                prox.ClampAndSetBounds(target, INFLUENCE_PROX_RADIUS, INFLUENCE_PROX_WIDTH);
+                threat.ClampAndSetBounds(target, INFLUENCE_THREAT_RADIUS, INFLUENCE_THREAT_WIDTH);
 
-                    if (interest > minVal)
-                    {
-                        count++;
-                        CommandHandler::Add(GameVisualRect(pos, { 1.0, 1.0 }, Colour::RED, min(interest, 1.0f)));
-                    }
+                movementCoster.Update(movement);
+                prox.Calculate(navMap);
+                threat.Calculate(lineOfSight, myThreat, movement);
 
-                    if (count >= maxCount)
-                    {
-                        printf("[WASM] InterestMap debug draw limit of %i elements hit\n", maxCount);
-                        break;
-                    }
-
-                    worldIndex++;
-                    localIndex++;
-                }
-
-                worldIndex += worldYIncrement;
-                localIndex += localYIncrement;
+                friendlyProx.Add(prox);
+                friendlyThreat.Add(threat);
             }
         }
     };

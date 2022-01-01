@@ -21,6 +21,15 @@ namespace Overseer::Systems::AI
 
         void Update(entt::registry& registry) override
         {
+            auto friendlyProx   = registry.ctx<FriendlyProxIMAP>();
+            auto friendlyThreat = registry.ctx<FriendlyThreatIMAP>();
+            auto enemyProx      = registry.ctx<EnemyProxIMAP>();
+            auto enemyThreat    = registry.ctx<EnemyThreatIMAP>();
+
+            auto navMap         = registry.ctx<Core::NavMap>();
+            auto movementCoster = registry.ctx<Core::MovementCoster>();
+            auto lineOfSight    = registry.ctx<Core::LineOfSight>();
+
             auto friendlyCreeps =
                 registry.view<My, Pos, CreepProx, CreepThreat, CreepMovement, Threat, Path>(entt::exclude<SquadLeader>);
 
@@ -36,35 +45,41 @@ namespace Overseer::Systems::AI
             printf("[WASM] GruntSystem: Running squad leaders...\n");
             for (auto entity : squadLeaders)
             {
-                auto [squadLeader, pos, prox, threat, movementMap, myThreat, path] = squadLeaders.get(entity);
-                auto goal                                                          = int2(90, 90);
-                pathfinder.FindPath(pos.Val, goal, path);
+                auto [squadLeader, pos, prox, threat, movement, myThreat, path] = squadLeaders.get(entity);
 
-                Core::MovementCoster::GetPath(
-                    PosToIndex(pos.Val, MAP_WIDTH), PosToIndex(path.Val[0], MAP_WIDTH), movementMap, path);
+                auto squad   = registry.get<Squad>(squadLeader.Squad);
+                int  maxDist = 0;
+                for (int i = 0; i < squad.Size; ++i)
+                {
+                    auto grunt    = squad.Grunts[i];
+                    auto gruntPos = registry.get<Pos>(grunt);
+                    int  dist     = DistanceChebyshev(pos.Val, gruntPos.Val);
+                    if (dist > maxDist)
+                        maxDist = dist;
+                }
 
-                // auto squad   = registry.get<Squad>(squadLeader.Squad);
-                // int  maxDist = 0;
-                // for (int i = 0; i < squad.Size; ++i)
-                // {
-                //     auto grunt    = squad.Grunts[i];
-                //     auto gruntPos = registry.get<Pos>(grunt);
-                //     int  dist     = DistanceChebyshev(pos.Val, gruntPos.Val);
-                //     if (dist > maxDist)
-                //         maxDist = dist;
-                // }
-                //
-                // if (maxDist < 8)
-                // {
-                //     auto goal = int2(90, 90);
-                //     pathfinder.FindPath(pos.Val, goal, path);
-                //
-                //     if (path.Count > 0 && path.Val[0] != pos.Val)
-                //     {
-                //         auto direction = GetDirection(pos.Val, path.Val[0]);
-                //         CommandHandler::Add(Move((double)entity, (double)direction));
-                //     }
-                // }
+                if (maxDist < 12)
+                {
+                    auto goal = int2(90, 90);
+
+                    pathfinder.FindPath(pos.Val, goal, path);
+
+                    int2 target = path.Val[0];
+
+                    friendlyProx.Subtract(prox);
+                    friendlyThreat.Subtract(threat);
+
+                    movement.ClampAndSetBounds(target, INTEREST_RADIUS, INTEREST_WIDTH);
+                    prox.ClampAndSetBounds(target, INFLUENCE_PROX_RADIUS, INFLUENCE_PROX_WIDTH);
+                    threat.ClampAndSetBounds(target, INFLUENCE_THREAT_RADIUS, INFLUENCE_THREAT_WIDTH);
+
+                    movementCoster.Update(movement);
+                    prox.Calculate(navMap);
+                    threat.Calculate(lineOfSight, myThreat, movement);
+
+                    friendlyProx.Add(prox);
+                    friendlyThreat.Add(threat);
+                }
             }
         }
 

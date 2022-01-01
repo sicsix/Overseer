@@ -232,6 +232,39 @@ namespace Overseer::Core::Influence
             }
         }
 
+        void NormaliseAndInvert(float minVal, float maxVal)
+        {
+            float max = std::numeric_limits<float>::lowest();
+            float min = std::numeric_limits<float>::max();
+
+            for (int i = 0; i < INTEREST_SIZE; i++)
+            {
+                float value = Interest[i];
+                if (value > max)
+                    max = value;
+                if (value < min)
+                    min = value;
+            }
+
+            if (min == max)
+            {
+                float fixedVal = min <= 0 ? 1 : 0;
+
+                for (int i = 0; i < INTEREST_SIZE; i++)
+                {
+                    Interest[i] = fixedVal;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < INTEREST_SIZE; i++)
+                {
+                    float value = Interest[i];
+                    Interest[i] = (maxVal - minVal) - (value - min) / (max - min) + minVal;
+                }
+            }
+        }
+
         void ApplyInterestTemplate(InterestType interestType)
         {
             InterestTemplate& interestTemplate = GetInterestTemplate(interestType, (InterestRange)INTEREST_RADIUS);
@@ -621,6 +654,45 @@ namespace Overseer::Core::Influence
                 int cost     = movement.Nodes[i].Cost;
                 // Turns 0 -> distance into 1 -> 0
                 influence[i] = CalculateInverseLinearInfluence(1.0f, cost, maxDist + 1);
+            }
+        }
+
+      public:
+        void DebugDraw(float minVal, int maxCount)
+        {
+            int worldIndex = WorldStartIndex;
+            int localIndex = LocalStartIndex;
+
+            int width           = LocalEnd.x - LocalStart.x;
+            int worldYIncrement = MAP_WIDTH - width;
+            int localYIncrement = INTEREST_WIDTH - width;
+
+            int count = 0;
+            for (int y = LocalStart.y; y < LocalEnd.y; ++y)
+            {
+                for (int x = LocalStart.x; x < LocalEnd.x; ++x)
+                {
+                    float interest = Interest[localIndex];
+                    auto  pos      = (double2)IndexToPos(worldIndex, MAP_WIDTH);
+
+                    if (interest > minVal)
+                    {
+                        count++;
+                        CommandHandler::Add(GameVisualRect(pos, { 1.0, 1.0 }, Colour::RED, min(interest, 1.0f)));
+                    }
+
+                    if (count >= maxCount)
+                    {
+                        printf("[WASM] InterestMap debug draw limit of %i elements hit\n", maxCount);
+                        break;
+                    }
+
+                    worldIndex++;
+                    localIndex++;
+                }
+
+                worldIndex += worldYIncrement;
+                localIndex += localYIncrement;
             }
         }
     };
