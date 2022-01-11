@@ -16,3 +16,6 @@ A pre-alpha bot for the game [Screeps Arena](https://store.steampowered.com/app/
 
 #### In Progess
 * Much much more to be done...
+
+## Build Instructions
+Soon...
